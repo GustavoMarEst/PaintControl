@@ -129,9 +129,9 @@ namespace PaintControl.Forms
                 ClienteCreado = new Cliente
                 {
                     Nombre = nombre,
-                    Telefono = "",
-                    Email = "",
-                    Direccion = ""
+                    //Telefono = "",
+                    //Email = "",
+                    //Direccion = ""
                 };
 
                 this.DialogResult = DialogResult.OK;

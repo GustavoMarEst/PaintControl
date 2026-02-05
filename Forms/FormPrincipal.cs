@@ -323,11 +323,11 @@ namespace PaintControl
 
             dgv.Columns.Add("Codigo", "Código");
             dgv.Columns.Add("Nombre", "Nombre");
-            dgv.Columns.Add("Telefono", "Teléfono");
+            //dgv.Columns.Add("Telefono", "Teléfono");
 
             foreach (var cliente in clientes)
             {
-                dgv.Rows.Add(cliente.Codigo, cliente.Nombre, cliente.Telefono);
+                dgv.Rows.Add(cliente.Codigo, cliente.Nombre);
                 dgv.Rows[dgv.Rows.Count - 1].Tag = cliente;
             }
 

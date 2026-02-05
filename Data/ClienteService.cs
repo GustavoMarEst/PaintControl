@@ -108,9 +108,9 @@ namespace PaintControl.Data
 
                     clienteExistente.Codigo = cliente.Codigo;
                     clienteExistente.Nombre = cliente.Nombre;
-                    clienteExistente.Telefono = cliente.Telefono;
-                    clienteExistente.Email = cliente.Email;
-                    clienteExistente.Direccion = cliente.Direccion;
+                    //clienteExistente.Telefono = cliente.Telefono;
+                    //clienteExistente.Email = cliente.Email;
+                    //clienteExistente.Direccion = cliente.Direccion;
 
                     context.SaveChanges();
                     return true;
