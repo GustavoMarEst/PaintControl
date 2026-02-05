@@ -1,38 +1,44 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PaintControl.Models
 {
+    [Table("Clientes")]
     public class Cliente
     {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
+
+        [MaxLength(20)]
         public string Codigo { get; set; }
+
+        [Required]
+        [MaxLength(100)]
         public string Nombre { get; set; }
+
+        [MaxLength(20)]
         public string Telefono { get; set; }
+
+        [MaxLength(100)]
         public string Email { get; set; }
+
+        [MaxLength(200)]
         public string Direccion { get; set; }
+
         public DateTime FechaRegistro { get; set; }
+
+        // Relación con Movimientos
+        public virtual ICollection<Movimiento> Movimientos { get; set; }
 
         public Cliente()
         {
             FechaRegistro = DateTime.Now;
+            Movimientos = new List<Movimiento>();
         }
 
-        public Cliente(int id, string codigo, string nombre, string telefono, string email, string direccion)
-        {
-            Id = id;
-            Codigo = codigo;
-            Nombre = nombre;
-            Telefono = telefono;
-            Email = email;
-            Direccion = direccion;
-            FechaRegistro = DateTime.Now;
-        }
-
-        // Para mostrar en listas
         public override string ToString()
         {
             return $"{Codigo} - {Nombre}";

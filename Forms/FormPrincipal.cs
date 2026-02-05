@@ -52,6 +52,54 @@ namespace PaintControl
             txtCriterio.Focus();
         }
 
+        // ELIMINAR DESPUES 
+        private void FormPrincipal_Load(object sender, EventArgs e)
+        {
+            // PRUEBA DE CONEXIÓN A LA BASE DE DATOS
+            try
+            {
+                using (var context = new DOALDbContext())
+                {
+                    bool conectado = context.Database.Exists();
+
+                    if (conectado)
+                    {
+                        MessageBox.Show("✓ Conexión exitosa a la base de datos\n\nLa base de datos está lista para usar.",
+                            "Conexión Exitosa",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show("✗ La base de datos no existe.\n\nSe creará automáticamente.",
+                            "Aviso",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning);
+
+                        // Crear la base de datos
+                        context.Database.Create();
+
+                        MessageBox.Show("✓ Base de datos creada exitosamente.",
+                            "Éxito",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"❌ Error de conexión a la base de datos:\n\n{ex.Message}\n\nDetalles:\n{ex.InnerException?.Message}",
+                    "Error de Conexión",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
+
+
+
+
+
         private void FormPrincipal_Resize(object sender, EventArgs e)
         {
             // Ajustar el panel de movimientos cuando se redimensione
@@ -65,21 +113,17 @@ namespace PaintControl
         {
             if (panelMovimientos == null) return;
 
-            // Calcular tamaños disponibles
-            int anchoDisponible = mainPanel.ClientSize.Width - 40; // 20px padding cada lado
-            int altoDisponible = mainPanel.ClientSize.Height - 145; // espacio para searchPanel más pequeño
+            int anchoDisponible = mainPanel.ClientSize.Width - 40;
+            int altoDisponible = mainPanel.ClientSize.Height - 145;
 
-            // Ajustar el panel
             panelMovimientos.Location = new Point(20, 130);
             panelMovimientos.Size = new Size(anchoDisponible, altoDisponible);
 
-            // Ajustar el DataGridView
             if (dgvMovimientos != null)
             {
                 dgvMovimientos.Size = new Size(anchoDisponible - 40, altoDisponible - 130);
             }
 
-            // Ajustar posición del botón agregar
             if (btnAgregarMovimiento != null)
             {
                 btnAgregarMovimiento.Location = new Point(anchoDisponible - 220, 10);
@@ -595,7 +639,6 @@ namespace PaintControl
 
             if (chkFiltrarFecha != null && chkFiltrarFecha.Checked)
             {
-                // Obtener las fechas asegurando que sea desde las 00:00:00 hasta las 23:59:59
                 DateTime fechaInicio = dtpFechaInicio.Value.Date; // Inicio del día (00:00:00)
                 DateTime fechaFin = dtpFechaFin.Value.Date.AddDays(1).AddSeconds(-1); // Fin del día (23:59:59)
 
@@ -764,7 +807,7 @@ namespace PaintControl
                 MultiSelect = false,
                 ReadOnly = true,
                 AllowUserToAddRows = false,
-                RowHeadersVisible = false,  // Esta línea oculta la columna del selector
+                RowHeadersVisible = false,
                 Font = new Font("Segoe UI", 14F),
                 RowTemplate = { Height = 35 },
                 ColumnHeadersHeight = 40,
@@ -798,7 +841,6 @@ namespace PaintControl
             dgv.Columns.Add("Nombre", "Nombre");
             dgv.Columns.Add("FechaRegistro", "Fecha de Registro");
 
-            // Evento para mantener el color del encabezado fijo
             dgv.CellPainting += (s, e) =>
             {
                 if (e.RowIndex == -1 && e.ColumnIndex >= 0)
@@ -837,7 +879,6 @@ namespace PaintControl
                 col.SortMode = DataGridViewColumnSortMode.NotSortable;
             }
 
-            // Usar FillWeight en lugar de Width para que se adapte al redimensionar
             dgv.Columns["Codigo"].FillWeight = 20;
             dgv.Columns["Nombre"].FillWeight = 40;
             dgv.Columns["FechaRegistro"].FillWeight = 40;
@@ -898,10 +939,9 @@ namespace PaintControl
             formTodosMovimientos.ShowDialog(this);
         }
 
-        // Métodos Paint para efectos visuales modernos
         private void HeaderPanel_Paint(object sender, PaintEventArgs e)
         {
-            // Dibujar línea inferior con gradiente para dar profundidad
+            // Línea inferior con gradiente para dar profundidad
             using (System.Drawing.Drawing2D.LinearGradientBrush brush =
                 new System.Drawing.Drawing2D.LinearGradientBrush(
                     new Rectangle(0, headerPanel.Height - 3, headerPanel.Width, 3),
@@ -915,7 +955,7 @@ namespace PaintControl
 
         private void SearchPanel_Paint(object sender, PaintEventArgs e)
         {
-            // Dibujar sombra suave alrededor del panel
+            // Sombra suave alrededor del panel
             e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
             using (System.Drawing.Drawing2D.GraphicsPath path = new System.Drawing.Drawing2D.GraphicsPath())
@@ -941,7 +981,7 @@ namespace PaintControl
 
         private void EmptyStatePanel_Paint(object sender, PaintEventArgs e)
         {
-            // Dibujar borde sutil
+            // Borde sutil
             using (Pen pen = new Pen(Color.FromArgb(30, 139, 155, 168), 1))
             {
                 e.Graphics.DrawRectangle(pen, 0, 0, emptyStatePanel.Width - 1, emptyStatePanel.Height - 1);

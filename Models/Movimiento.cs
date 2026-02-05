@@ -1,31 +1,54 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PaintControl.Models
 {
+    [Table("Movimientos")]
     public class Movimiento
     {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
+
         public int NumeroMovimiento { get; set; }
+
+        [Required]
         public int ClienteId { get; set; }
+
         public DateTime Fecha { get; set; }
+
+        [MaxLength(50)]
         public string ClaveColor { get; set; }
+
+        [MaxLength(200)]
         public string Descripcion { get; set; }
+
+        [MaxLength(50)]
         public string Base { get; set; }
-        public string Unidad { get; set; } // "Litro" o "Galón"
+
+        [MaxLength(20)]
+        public string Unidad { get; set; }
+
+        // QUITAR [Column(TypeName = "decimal(10,2)")] - se configura en DbContext
         public decimal Cantidad { get; set; }
+
+        // QUITAR [Column(TypeName = "decimal(10,2)")] - se configura en DbContext
         public decimal Precio { get; set; }
-        public string Formula { get; set; } // Máximo 6 componentes
+
+        [MaxLength(500)]
+        public string Formula { get; set; }
+
+        // Relación con Cliente
+        [ForeignKey("ClienteId")]
+        public virtual Cliente Cliente { get; set; }
 
         public Movimiento()
         {
             Fecha = DateTime.Now;
         }
 
-        // Calcular el total del movimiento
+        [NotMapped]
         public decimal Total
         {
             get { return Cantidad * Precio; }

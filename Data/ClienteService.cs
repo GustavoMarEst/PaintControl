@@ -1,45 +1,36 @@
 ﻿using PaintControl.Models;
 using System;
 using System.Collections.Generic;
-using System.Collections.Generic;
 using System.Linq;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Data.Entity;
 
 namespace PaintControl.Data
 {
     public class ClienteService
     {
-        private List<Cliente> clientes;
-
-        public ClienteService()
-        {
-            clientes = new List<Cliente>
-            {
-                new Cliente(1, "CLI001", "Juan Pérez", "834-123-4567", "juan@email.com", "Calle Principal 123"),
-                new Cliente(2, "CLI002", "María González", "834-234-5678", "maria@email.com", "Av. Hidalgo 456"),
-                new Cliente(3, "CLI003", "Pedro Martínez", "834-345-6789", "pedro@email.com", "Col. Centro 789"),
-                new Cliente(4, "CLI004", "Ana López", "834-456-7890", "ana@email.com", "Fracc. Las Flores 321"),
-                new Cliente(5, "CLI005", "Juan Rodríguez", "834-567-8901", "carlos@email.com", "Zona Industrial 654")
-            };
-        }
-
-        // Buscar por nombre (búsqueda principal)
+        // Buscar por nombre
         public List<Cliente> BuscarPorNombre(string nombre)
         {
             if (string.IsNullOrWhiteSpace(nombre))
                 return new List<Cliente>();
 
-            return clientes.Where(c => c.Nombre.ToLower().Contains(nombre.ToLower()))
-                          .OrderBy(c => c.Nombre)
-                          .ToList();
+            using (var context = new DOALDbContext())
+            {
+                return context.Clientes
+                    .Where(c => c.Nombre.Contains(nombre))
+                    .OrderBy(c => c.Nombre)
+                    .ToList();
+            }
         }
 
-        // Buscar por código (búsqueda alternativa)
+        // Buscar por código
         public Cliente BuscarPorCodigo(string codigo)
         {
-            return clientes.FirstOrDefault(c => c.Codigo.Equals(codigo, StringComparison.OrdinalIgnoreCase));
+            using (var context = new DOALDbContext())
+            {
+                return context.Clientes
+                    .FirstOrDefault(c => c.Codigo == codigo);
+            }
         }
 
         // Buscar por código o nombre
@@ -48,61 +39,109 @@ namespace PaintControl.Data
             if (string.IsNullOrWhiteSpace(criterio))
                 return new List<Cliente>();
 
-            return clientes.Where(c =>
-                c.Codigo.ToLower().Contains(criterio.ToLower()) ||
-                c.Nombre.ToLower().Contains(criterio.ToLower()))
-                .OrderBy(c => c.Nombre)
-                .ToList();
+            using (var context = new DOALDbContext())
+            {
+                return context.Clientes
+                    .Where(c => c.Codigo.Contains(criterio) || c.Nombre.Contains(criterio))
+                    .OrderBy(c => c.Nombre)
+                    .ToList();
+            }
         }
 
+        // Obtener todos los clientes
         public List<Cliente> ObtenerTodos()
         {
-            return clientes.OrderBy(c => c.Nombre).ToList();
+            using (var context = new DOALDbContext())
+            {
+                return context.Clientes
+                    .OrderBy(c => c.Nombre)
+                    .ToList();
+            }
         }
 
+        // Obtener por ID
         public Cliente ObtenerPorId(int id)
         {
-            return clientes.FirstOrDefault(c => c.Id == id);
+            using (var context = new DOALDbContext())
+            {
+                return context.Clientes.Find(id);
+            }
         }
 
+        // Agregar cliente
         public bool AgregarCliente(Cliente cliente)
         {
-            // Generar ID automáticamente
-            cliente.Id = clientes.Count > 0 ? clientes.Max(c => c.Id) + 1 : 1;
+            try
+            {
+                using (var context = new DOALDbContext())
+                {
+                    // Generar código automáticamente
+                    var ultimoId = context.Clientes.Any()
+                        ? context.Clientes.Max(c => c.Id)
+                        : 0;
+                    cliente.Codigo = $"CLI{(ultimoId + 1):000}";
 
-            // Generar código automáticamente (CLI + número de 3 dígitos)
-            cliente.Codigo = $"CLI{cliente.Id:000}";
+                    // Establecer fecha de registro
+                    cliente.FechaRegistro = DateTime.Now;
 
-            // Establecer fecha de registro
-            cliente.FechaRegistro = DateTime.Now;
-
-            // Agregar a la lista
-            clientes.Add(cliente);
-            return true;
+                    context.Clientes.Add(cliente);
+                    context.SaveChanges();
+                    return true;
+                }
+            }
+            catch
+            {
+                return false;
+            }
         }
 
+        // Actualizar cliente
         public bool ActualizarCliente(Cliente cliente)
         {
-            var clienteExistente = clientes.FirstOrDefault(c => c.Id == cliente.Id);
-            if (clienteExistente == null)
-                return false;
+            try
+            {
+                using (var context = new DOALDbContext())
+                {
+                    var clienteExistente = context.Clientes.Find(cliente.Id);
+                    if (clienteExistente == null)
+                        return false;
 
-            clienteExistente.Codigo = cliente.Codigo;
-            clienteExistente.Nombre = cliente.Nombre;
-            clienteExistente.Telefono = cliente.Telefono;
-            clienteExistente.Email = cliente.Email;
-            clienteExistente.Direccion = cliente.Direccion;
-            return true;
+                    clienteExistente.Codigo = cliente.Codigo;
+                    clienteExistente.Nombre = cliente.Nombre;
+                    clienteExistente.Telefono = cliente.Telefono;
+                    clienteExistente.Email = cliente.Email;
+                    clienteExistente.Direccion = cliente.Direccion;
+
+                    context.SaveChanges();
+                    return true;
+                }
+            }
+            catch
+            {
+                return false;
+            }
         }
 
+        // Eliminar cliente
         public bool EliminarCliente(int id)
         {
-            var cliente = clientes.FirstOrDefault(c => c.Id == id);
-            if (cliente == null)
-                return false;
+            try
+            {
+                using (var context = new DOALDbContext())
+                {
+                    var cliente = context.Clientes.Find(id);
+                    if (cliente == null)
+                        return false;
 
-            clientes.Remove(cliente);
-            return true;
+                    context.Clientes.Remove(cliente);
+                    context.SaveChanges();
+                    return true;
+                }
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

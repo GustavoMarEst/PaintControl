@@ -2,153 +2,161 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Data.Entity;
 
 namespace PaintControl.Data
 {
     public class MovimientoService
     {
-        private List<Movimiento> movimientos;
-        private int ultimoNumeroMovimiento = 0;
-
-        public MovimientoService()
-        {
-            movimientos = new List<Movimiento>();
-            InicializarDatosEjemplo();
-        }
-
-        private void InicializarDatosEjemplo()
-        {
-            // Movimientos de ejemplo para el cliente 1 (Juan Pérez)
-            AgregarMovimiento(new Movimiento
-            {
-                Id = 1,
-                NumeroMovimiento = 1001,
-                ClienteId = 1,
-                Fecha = DateTime.Now.AddDays(-10),
-                ClaveColor = "BL-001",
-                Descripcion = "Blanco Mate",
-                Base = "Base A",
-                Unidad = "Litro",
-                Cantidad = 5,
-                Precio = 150.50m,
-                Formula = "R:255,G:255,B:255"
-            });
-
-            AgregarMovimiento(new Movimiento
-            {
-                Id = 2,
-                NumeroMovimiento = 1002,
-                ClienteId = 1,
-                Fecha = DateTime.Now.AddDays(-5),
-                ClaveColor = "AZ-025",
-                Descripcion = "Azul Cielo",
-                Base = "Base C",
-                Unidad = "Galón",
-                Cantidad = 2,
-                Precio = 450.00m,
-                Formula = "R:135,G:206,B:250"
-            });
-
-            // Movimientos de ejemplo para el cliente 2 (María González)
-            AgregarMovimiento(new Movimiento
-            {
-                Id = 3,
-                NumeroMovimiento = 1003,
-                ClienteId = 2,
-                Fecha = DateTime.Now.AddDays(-3),
-                ClaveColor = "VR-100",
-                Descripcion = "Verde Menta",
-                Base = "Base B",
-                Unidad = "Litro",
-                Cantidad = 3,
-                Precio = 180.00m,
-                Formula = "R:152,G:251,B:152"
-            });
-
-            ultimoNumeroMovimiento = 1003;
-        }
-
+        // Agregar movimiento
         public bool AgregarMovimiento(Movimiento movimiento)
         {
-            if (movimiento.NumeroMovimiento == 0)
+            try
             {
-                movimiento.NumeroMovimiento = ++ultimoNumeroMovimiento;
-            }
+                using (var context = new DOALDbContext())
+                {
+                    // Generar número de movimiento automáticamente
+                    if (movimiento.NumeroMovimiento == 0)
+                    {
+                        var ultimoNumero = context.Movimientos.Any()
+                            ? context.Movimientos.Max(m => m.NumeroMovimiento)
+                            : 1000;
+                        movimiento.NumeroMovimiento = ultimoNumero + 1;
+                    }
 
-            movimiento.Id = movimientos.Count > 0 ? movimientos.Max(m => m.Id) + 1 : 1;
-            movimientos.Add(movimiento);
-            return true;
+                    context.Movimientos.Add(movimiento);
+                    context.SaveChanges();
+                    return true;
+                }
+            }
+            catch
+            {
+                return false;
+            }
         }
 
+        // Obtener movimientos por cliente
         public List<Movimiento> ObtenerPorCliente(int clienteId)
         {
-            return movimientos.Where(m => m.ClienteId == clienteId)
-                             .OrderByDescending(m => m.Fecha)
-                             .ToList();
+            using (var context = new DOALDbContext())
+            {
+                return context.Movimientos
+                    .Where(m => m.ClienteId == clienteId)
+                    .OrderByDescending(m => m.Fecha)
+                    .ToList();
+            }
         }
 
+        // Obtener por cliente y fechas
         public List<Movimiento> ObtenerPorClienteYFechas(int clienteId, DateTime fechaInicio, DateTime fechaFin)
         {
-            return movimientos.Where(m => m.ClienteId == clienteId &&
-                                         m.Fecha >= fechaInicio &&
-                                         m.Fecha <= fechaFin)
-                             .OrderByDescending(m => m.Fecha)
-                             .ToList();
+            using (var context = new DOALDbContext())
+            {
+                return context.Movimientos
+                    .Where(m => m.ClienteId == clienteId &&
+                               m.Fecha >= fechaInicio &&
+                               m.Fecha <= fechaFin)
+                    .OrderByDescending(m => m.Fecha)
+                    .ToList();
+            }
         }
 
+        // Obtener todos los movimientos
         public List<Movimiento> ObtenerTodos()
         {
-            return movimientos.OrderByDescending(m => m.Fecha).ToList();
+            using (var context = new DOALDbContext())
+            {
+                return context.Movimientos
+                    .Include(m => m.Cliente)
+                    .OrderByDescending(m => m.Fecha)
+                    .ToList();
+            }
         }
 
+        // Obtener por número de movimiento
         public Movimiento ObtenerPorNumero(int numeroMovimiento)
         {
-            return movimientos.FirstOrDefault(m => m.NumeroMovimiento == numeroMovimiento);
+            using (var context = new DOALDbContext())
+            {
+                return context.Movimientos
+                    .FirstOrDefault(m => m.NumeroMovimiento == numeroMovimiento);
+            }
         }
 
+        // Actualizar movimiento
         public bool ActualizarMovimiento(Movimiento movimiento)
         {
-            var movimientoExistente = movimientos.FirstOrDefault(m => m.Id == movimiento.Id);
-            if (movimientoExistente == null)
-                return false;
+            try
+            {
+                using (var context = new DOALDbContext())
+                {
+                    var movimientoExistente = context.Movimientos.Find(movimiento.Id);
+                    if (movimientoExistente == null)
+                        return false;
 
-            movimientoExistente.Fecha = movimiento.Fecha;
-            movimientoExistente.ClaveColor = movimiento.ClaveColor;
-            movimientoExistente.Descripcion = movimiento.Descripcion;
-            movimientoExistente.Base = movimiento.Base;
-            movimientoExistente.Unidad = movimiento.Unidad;
-            movimientoExistente.Cantidad = movimiento.Cantidad;
-            movimientoExistente.Precio = movimiento.Precio;
-            movimientoExistente.Formula = movimiento.Formula;
-            return true;
+                    movimientoExistente.Fecha = movimiento.Fecha;
+                    movimientoExistente.ClaveColor = movimiento.ClaveColor;
+                    movimientoExistente.Descripcion = movimiento.Descripcion;
+                    movimientoExistente.Base = movimiento.Base;
+                    movimientoExistente.Unidad = movimiento.Unidad;
+                    movimientoExistente.Cantidad = movimiento.Cantidad;
+                    movimientoExistente.Precio = movimiento.Precio;
+                    movimientoExistente.Formula = movimiento.Formula;
+
+                    context.SaveChanges();
+                    return true;
+                }
+            }
+            catch
+            {
+                return false;
+            }
         }
 
+        // Eliminar movimiento
         public bool EliminarMovimiento(int id)
         {
-            var movimiento = movimientos.FirstOrDefault(m => m.Id == id);
-            if (movimiento == null)
-                return false;
+            try
+            {
+                using (var context = new DOALDbContext())
+                {
+                    var movimiento = context.Movimientos.Find(id);
+                    if (movimiento == null)
+                        return false;
 
-            movimientos.Remove(movimiento);
-            return true;
+                    context.Movimientos.Remove(movimiento);
+                    context.SaveChanges();
+                    return true;
+                }
+            }
+            catch
+            {
+                return false;
+            }
         }
 
+        // Obtener siguiente número de movimiento
         public int ObtenerSiguienteNumeroMovimiento()
         {
-            return ultimoNumeroMovimiento + 1;
+            using (var context = new DOALDbContext())
+            {
+                if (!context.Movimientos.Any())
+                    return 1001;
+
+                return context.Movimientos.Max(m => m.NumeroMovimiento) + 1;
+            }
         }
 
-
-        // Agregar estos métodos a la clase MovimientoService
-
+        // Obtener todos por fechas
         public List<Movimiento> ObtenerTodosPorFechas(DateTime fechaInicio, DateTime fechaFin)
         {
-            return movimientos
-                .Where(m => m.Fecha >= fechaInicio && m.Fecha <= fechaFin)
-                .OrderByDescending(m => m.Fecha)
-                .ToList();
+            using (var context = new DOALDbContext())
+            {
+                return context.Movimientos
+                    .Where(m => m.Fecha >= fechaInicio && m.Fecha <= fechaFin)
+                    .OrderByDescending(m => m.Fecha)
+                    .ToList();
+            }
         }
     }
 }
