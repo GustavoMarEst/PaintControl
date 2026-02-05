@@ -1,0 +1,28 @@
+## Visual Studio
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio cache/options
+.vs/
+
+# Database files (opcional - depende si quieres versionar tu BD)
+*.mdf
+*.ldf
+
+# Packages
+packages/
+*.nupkg
