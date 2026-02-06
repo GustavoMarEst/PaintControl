@@ -39,6 +39,19 @@ namespace PaintControl
             clienteService = new ClienteService();
             movimientoService = new MovimientoService();
 
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                try
+                {
+                    using (var context = new DOALDbContext())
+                    {
+                        // Forzar la compilación de consultas en segundo plano
+                        var count = context.Clientes.Count();
+                    }
+                }
+                catch { }
+            });
+
             // Configurar el reloj
             ConfigurarReloj();
 
