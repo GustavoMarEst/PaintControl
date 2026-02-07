@@ -67,6 +67,7 @@ namespace PaintControl.Forms
                 Location = new Point(30, 120),
                 Width = 420,
                 Font = new Font("Segoe UI", 11F),
+                CharacterCasing = CharacterCasing.Upper,
                 Text = nombreSugerido
             };
 

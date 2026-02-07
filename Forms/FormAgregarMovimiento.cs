@@ -11,6 +11,11 @@ namespace PaintControl.Forms
         private Cliente cliente;
         private int siguienteNumero;
 
+        // Referencias directas a controles de fórmula (evita Controls.Find)
+        private TextBox[] txtTipos = new TextBox[6];
+        private TextBox[] txtValores1 = new TextBox[6];
+        private TextBox[] txtValores2 = new TextBox[6];
+
         public FormAgregarMovimiento(Cliente cliente, int siguienteNumeroMovimiento)
         {
             this.cliente = cliente;
@@ -148,6 +153,7 @@ namespace PaintControl.Forms
                 Width = controlWidth,
                 Font = new Font("Segoe UI", 11F),
                 MaxLength = 20,
+                CharacterCasing = CharacterCasing.Upper,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             yPos += 45;
@@ -161,23 +167,23 @@ namespace PaintControl.Forms
                 Width = controlWidth,
                 Font = new Font("Segoe UI", 11F),
                 MaxLength = 100,
+                CharacterCasing = CharacterCasing.Upper,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             yPos += 45;
 
             // Base
             Label lblBaseLabel = CrearLabel("Base:", 20, yPos);
-            ComboBox cmbBase = new ComboBox
+            TextBox txtBase = new TextBox
             {
-                Name = "cmbBase",
+                Name = "txtBase",
                 Location = new Point(controlX, yPos),
                 Width = controlWidth,
                 Font = new Font("Segoe UI", 11F),
-                DropDownStyle = ComboBoxStyle.DropDownList,
+                MaxLength = 50,
+                CharacterCasing = CharacterCasing.Upper,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
-            cmbBase.Items.AddRange(new object[] { "Base A", "Base B", "Base C", "Base D", "Base E" });
-            cmbBase.SelectedIndex = 0;
             yPos += 45;
 
             // Unidad
@@ -305,8 +311,10 @@ namespace PaintControl.Forms
                     Width = 50,
                     Font = new Font("Segoe UI", 9.5F),
                     TextAlign = HorizontalAlignment.Center,
+                    CharacterCasing = CharacterCasing.Upper,
                     Margin = new Padding(0)
                 };
+                txtTipos[i] = txtTipo;
 
                 Label lblIgual = new Label
                 {
@@ -326,6 +334,7 @@ namespace PaintControl.Forms
                     TextAlign = HorizontalAlignment.Center,
                     Margin = new Padding(0, 0, 5, 0)
                 };
+                txtValores1[i] = txtValor1;
 
                 // Segundo número (opcional)
                 TextBox txtValor2 = new TextBox
@@ -336,6 +345,7 @@ namespace PaintControl.Forms
                     TextAlign = HorizontalAlignment.Center,
                     Margin = new Padding(0)
                 };
+                txtValores2[i] = txtValor2;
 
                 flowPanel.Controls.AddRange(new Control[] { txtTipo, lblIgual, txtValor1, txtValor2 });
 
@@ -369,7 +379,7 @@ namespace PaintControl.Forms
                 lblFechaLabel, dtpFecha,
                 lblClaveLabel, txtClave,
                 lblDescLabel, txtDescripcion,
-                lblBaseLabel, cmbBase,
+                lblBaseLabel, txtBase,
                 lblUnidadLabel, cmbUnidad,
                 lblCantidadLabel, numCantidad,
                 lblPrecioLabel, numPrecio,
@@ -430,7 +440,7 @@ namespace PaintControl.Forms
 
             btnGuardar.Click += (s, e) => GuardarMovimiento(
                 txtNumMov, dtpFecha, txtClave, txtDescripcion,
-                cmbBase, cmbUnidad, numCantidad, numPrecio, panelFormulas);
+                txtBase, cmbUnidad, numCantidad, numPrecio, panelFormulas);
 
             btnCancelar.Click += (s, e) =>
             {
@@ -466,21 +476,12 @@ namespace PaintControl.Forms
 
             for (int i = 0; i < 6; i++)
             {
-                var txtTipo = this.Controls.Find($"txtTipo{i}", true);
-                var txtValor1 = this.Controls.Find($"txtValor1_{i}", true);
-                var txtValor2 = this.Controls.Find($"txtValor2_{i}", true);
+                if (txtTipos[i] == null || txtValores1[i] == null) continue;
+                if (string.IsNullOrWhiteSpace(txtTipos[i].Text)) continue;
 
-                if (txtTipo.Length == 0 || txtValor1.Length == 0) continue;
-
-                TextBox txtT = txtTipo[0] as TextBox;
-                TextBox txt1 = txtValor1[0] as TextBox;
-                TextBox txt2 = txtValor2.Length > 0 ? txtValor2[0] as TextBox : null;
-
-                if (string.IsNullOrWhiteSpace(txtT.Text)) continue;
-
-                string formula = $"{txtT.Text.Trim()} = {txt1.Text.Trim()}";
-                if (txt2 != null && !string.IsNullOrWhiteSpace(txt2.Text))
-                    formula += $" {txt2.Text.Trim()}";
+                string formula = $"{txtTipos[i].Text.Trim()} = {txtValores1[i].Text.Trim()}";
+                if (txtValores2[i] != null && !string.IsNullOrWhiteSpace(txtValores2[i].Text))
+                    formula += $" {txtValores2[i].Text.Trim()}";
 
                 formulas.Add(formula);
             }
@@ -489,7 +490,7 @@ namespace PaintControl.Forms
         }
 
         private void GuardarMovimiento(TextBox txtNumMov, DateTimePicker dtpFecha,
-            TextBox txtClave, TextBox txtDescripcion, ComboBox cmbBase, ComboBox cmbUnidad,
+            TextBox txtClave, TextBox txtDescripcion, TextBox txtBase, ComboBox cmbUnidad,
             NumericUpDown numCantidad, NumericUpDown numPrecio, TableLayoutPanel panelFormulas)
         {
             if (string.IsNullOrWhiteSpace(txtClave.Text))
@@ -515,7 +516,7 @@ namespace PaintControl.Forms
                 Fecha = dtpFecha.Value,
                 ClaveColor = txtClave.Text.Trim(),
                 Descripcion = txtDescripcion.Text.Trim(),
-                Base = cmbBase.SelectedItem?.ToString() ?? "Base A",
+                Base = txtBase.Text.Trim(),
                 Unidad = cmbUnidad.SelectedItem?.ToString() ?? "Litro",
                 Cantidad = numCantidad.Value,
                 Precio = numPrecio.Value,

@@ -1,6 +1,7 @@
 ﻿using PaintControl.Models;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Data.Entity;
 
@@ -15,7 +16,6 @@ namespace PaintControl.Data
             {
                 using (var context = new DOALDbContext())
                 {
-                    // Generar número de movimiento automáticamente
                     if (movimiento.NumeroMovimiento == 0)
                     {
                         var ultimoNumero = context.Movimientos.Any()
@@ -29,8 +29,11 @@ namespace PaintControl.Data
                     return true;
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.WriteLine($"Error al agregar movimiento: {ex.Message}");
+                if (ex.InnerException != null)
+                    Debug.WriteLine($"  Inner: {ex.InnerException.Message}");
                 return false;
             }
         }
@@ -41,6 +44,7 @@ namespace PaintControl.Data
             using (var context = new DOALDbContext())
             {
                 return context.Movimientos
+                    .AsNoTracking()
                     .Where(m => m.ClienteId == clienteId)
                     .OrderByDescending(m => m.Fecha)
                     .ToList();
@@ -53,6 +57,7 @@ namespace PaintControl.Data
             using (var context = new DOALDbContext())
             {
                 return context.Movimientos
+                    .AsNoTracking()
                     .Where(m => m.ClienteId == clienteId &&
                                m.Fecha >= fechaInicio &&
                                m.Fecha <= fechaFin)
@@ -61,12 +66,13 @@ namespace PaintControl.Data
             }
         }
 
-        // Obtener todos los movimientos
+        // Obtener todos los movimientos (con cliente incluido)
         public List<Movimiento> ObtenerTodos()
         {
             using (var context = new DOALDbContext())
             {
                 return context.Movimientos
+                    .AsNoTracking()
                     .Include(m => m.Cliente)
                     .OrderByDescending(m => m.Fecha)
                     .ToList();
@@ -79,6 +85,7 @@ namespace PaintControl.Data
             using (var context = new DOALDbContext())
             {
                 return context.Movimientos
+                    .AsNoTracking()
                     .FirstOrDefault(m => m.NumeroMovimiento == numeroMovimiento);
             }
         }
@@ -107,8 +114,9 @@ namespace PaintControl.Data
                     return true;
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.WriteLine($"Error al actualizar movimiento {movimiento.Id}: {ex.Message}");
                 return false;
             }
         }
@@ -129,8 +137,9 @@ namespace PaintControl.Data
                     return true;
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.WriteLine($"Error al eliminar movimiento {id}: {ex.Message}");
                 return false;
             }
         }
@@ -153,6 +162,7 @@ namespace PaintControl.Data
             using (var context = new DOALDbContext())
             {
                 return context.Movimientos
+                    .AsNoTracking()
                     .Where(m => m.Fecha >= fechaInicio && m.Fecha <= fechaFin)
                     .OrderByDescending(m => m.Fecha)
                     .ToList();

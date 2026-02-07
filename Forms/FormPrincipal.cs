@@ -73,54 +73,6 @@ namespace PaintControl
             txtCriterio.Focus();
         }
 
-        // ELIMINAR DESPUES 
-        private void FormPrincipal_Load(object sender, EventArgs e)
-        {
-            // PRUEBA DE CONEXIÓN A LA BASE DE DATOS
-            try
-            {
-                using (var context = new DOALDbContext())
-                {
-                    bool conectado = context.Database.Exists();
-
-                    if (conectado)
-                    {
-                        MessageBox.Show("✓ Conexión exitosa a la base de datos\n\nLa base de datos está lista para usar.",
-                            "Conexión Exitosa",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Information);
-                    }
-                    else
-                    {
-                        MessageBox.Show("✗ La base de datos no existe.\n\nSe creará automáticamente.",
-                            "Aviso",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Warning);
-
-                        // Crear la base de datos
-                        context.Database.Create();
-
-                        MessageBox.Show("✓ Base de datos creada exitosamente.",
-                            "Éxito",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Information);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"❌ Error de conexión a la base de datos:\n\n{ex.Message}\n\nDetalles:\n{ex.InnerException?.Message}",
-                    "Error de Conexión",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-            }
-        }
-
-
-
-
-
-
         private void FormPrincipal_Resize(object sender, EventArgs e)
         {
             // Ajustar el panel de movimientos cuando se redimensione
@@ -174,7 +126,6 @@ namespace PaintControl
         {
             // Eventos del campo de búsqueda
             txtCriterio.KeyPress += TxtCriterio_KeyPress;
-            txtCriterio.TextChanged += TxtCriterio_TextChanged;
 
             // Eventos de los botones
             btnBuscarInline.Click += BtnBuscarCliente_Click;
@@ -222,9 +173,6 @@ namespace PaintControl
         {
             switch (e.KeyCode)
             {
-                //case Keys.F2:
-                //    BuscarCliente();
-                //    break;
                 case Keys.F8:
                     MostrarTodosMovimientos();
                     break;
@@ -251,14 +199,6 @@ namespace PaintControl
             {
                 BuscarCliente();
                 e.Handled = true;
-            }
-        }
-
-        private void TxtCriterio_TextChanged(object sender, EventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(txtCriterio.Text))
-            {
-                // No limpiar automáticamente al vaciar el campo
             }
         }
 
@@ -316,75 +256,117 @@ namespace PaintControl
             Form seleccionForm = new Form
             {
                 Text = "Seleccione un Cliente",
-                Size = new Size(700, 400),
-                StartPosition = FormStartPosition.CenterParent,
-                FormBorderStyle = FormBorderStyle.FixedDialog,
-                MaximizeBox = false,
-                MinimizeBox = false
+                Size = new Size(900, 600),
+                StartPosition = FormStartPosition.CenterParent
+            };
+
+            Panel topPanel = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 50,
+                Padding = new Padding(10)
             };
 
             Label lblInfo = new Label
             {
-                Text = "Se encontraron múltiples clientes. Seleccione uno:",
-                Location = new Point(20, 20),
+                Text = $"Se encontraron {clientes.Count} clientes. Doble clic para seleccionar:",
+                Location = new Point(10, 15),
                 AutoSize = true,
-                Font = new Font("Segoe UI", 10F)
+                Font = new Font("Segoe UI", 14F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(46, 92, 138)
             };
+
+            topPanel.Controls.Add(lblInfo);
 
             DataGridView dgv = new DataGridView
             {
-                Location = new Point(20, 50),
-                Size = new Size(640, 250),
+                Dock = DockStyle.Fill,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                 MultiSelect = false,
                 ReadOnly = true,
-                AllowUserToAddRows = false
+                AllowUserToAddRows = false,
+                RowHeadersVisible = false,
+                Font = new Font("Segoe UI", 14F),
+                RowTemplate = { Height = 35 },
+                ColumnHeadersHeight = 40,
+                ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
+                {
+                    BackColor = Color.FromArgb(47, 164, 231),
+                    ForeColor = Color.White,
+                    Font = new Font("Segoe UI", 13F, FontStyle.Bold),
+                    Alignment = DataGridViewContentAlignment.MiddleCenter
+                },
+                DefaultCellStyle = new DataGridViewCellStyle
+                {
+                    BackColor = Color.White,
+                    ForeColor = Color.Black,
+                    SelectionBackColor = Color.FromArgb(214, 235, 255),
+                    SelectionForeColor = Color.Black,
+                    Font = new Font("Segoe UI", 12F),
+                    Padding = new Padding(5),
+                    Alignment = DataGridViewContentAlignment.MiddleCenter
+                },
+                EnableHeadersVisualStyles = false,
+                BorderStyle = BorderStyle.Fixed3D,
+                GridColor = Color.LightGray,
             };
 
             dgv.Columns.Add("Codigo", "Código");
             dgv.Columns.Add("Nombre", "Nombre");
-            //dgv.Columns.Add("Telefono", "Teléfono");
+            dgv.Columns.Add("FechaRegistro", "Fecha de Registro");
 
-            foreach (var cliente in clientes)
+            dgv.CellPainting += (s, e) =>
             {
-                dgv.Rows.Add(cliente.Codigo, cliente.Nombre);
-                dgv.Rows[dgv.Rows.Count - 1].Tag = cliente;
-            }
-
-            Button btnSeleccionar = new Button
-            {
-                Text = "Seleccionar",
-                Location = new Point(460, 310),
-                Size = new Size(100, 35),
-                BackColor = Color.FromArgb(47, 164, 231),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
-            };
-            btnSeleccionar.FlatAppearance.BorderSize = 0;
-
-            Button btnCancelar = new Button
-            {
-                Text = "Cancelar",
-                Location = new Point(570, 310),
-                Size = new Size(100, 35),
-                BackColor = Color.Gray,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
-            };
-            btnCancelar.FlatAppearance.BorderSize = 0;
-
-            btnSeleccionar.Click += (s, e) =>
-            {
-                if (dgv.SelectedRows.Count > 0)
+                if (e.RowIndex == -1 && e.ColumnIndex >= 0)
                 {
-                    Cliente clienteSeleccionado = (Cliente)dgv.SelectedRows[0].Tag;
-                    SeleccionarCliente(clienteSeleccionado);
-                    seleccionForm.Close();
+                    e.PaintBackground(e.CellBounds, true);
+                    using (Brush brush = new SolidBrush(Color.FromArgb(47, 164, 231)))
+                    {
+                        e.Graphics.FillRectangle(brush, e.CellBounds);
+                    }
+                    using (Brush textBrush = new SolidBrush(Color.White))
+                    {
+                        StringFormat sf = new StringFormat
+                        {
+                            Alignment = StringAlignment.Center,
+                            LineAlignment = StringAlignment.Center
+                        };
+                        e.Graphics.DrawString(e.Value?.ToString() ?? "",
+                            new Font("Segoe UI", 13F, FontStyle.Bold),
+                            textBrush,
+                            e.CellBounds,
+                            sf);
+                    }
+                    e.Handled = true;
                 }
             };
 
-            btnCancelar.Click += (s, e) => seleccionForm.Close();
+            dgv.AllowUserToResizeColumns = false;
+            dgv.AllowUserToResizeRows = false;
+            dgv.AllowUserToOrderColumns = false;
+
+            dgv.ColumnHeadersHeightSizeMode =
+                DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+
+            foreach (DataGridViewColumn col in dgv.Columns)
+            {
+                col.SortMode = DataGridViewColumnSortMode.NotSortable;
+            }
+
+            dgv.Columns["Codigo"].FillWeight = 20;
+            dgv.Columns["Nombre"].FillWeight = 40;
+            dgv.Columns["FechaRegistro"].FillWeight = 40;
+
+            foreach (var cliente in clientes)
+            {
+                dgv.Rows.Add(
+                    cliente.Codigo,
+                    cliente.Nombre,
+                    cliente.FechaRegistro.ToShortDateString()
+                );
+                dgv.Rows[dgv.Rows.Count - 1].Tag = cliente;
+            }
 
             dgv.CellDoubleClick += (s, e) =>
             {
@@ -396,11 +378,9 @@ namespace PaintControl
                 }
             };
 
-            seleccionForm.Controls.Add(lblInfo);
+            seleccionForm.BackColor = Color.FromArgb(244, 247, 251);
             seleccionForm.Controls.Add(dgv);
-            seleccionForm.Controls.Add(btnSeleccionar);
-            seleccionForm.Controls.Add(btnCancelar);
-
+            seleccionForm.Controls.Add(topPanel);
             seleccionForm.ShowDialog(this);
         }
 
@@ -409,7 +389,6 @@ namespace PaintControl
             clienteActual = cliente;
             emptyStatePanel.Visible = false;
             searchPanel.BackColor = Color.FromArgb(164, 231, 47);
-            //searchPanel.BackColor = Color.FromArgb(128, 196, 83);
 
             MostrarMovimientos();
         }
@@ -519,7 +498,6 @@ namespace PaintControl
                 Text = "➕ Agregar Compra",
                 Location = new Point(anchoDisponible - 220, 10),
                 Size = new Size(200, 38),
-                //BackColor = Color.FromArgb(47, 164, 231),
                 BackColor = Color.FromArgb(231, 47, 164),
 
                 ForeColor = Color.White,
@@ -529,7 +507,7 @@ namespace PaintControl
             };
             btnAgregarMovimiento.Click += BtnAgregarMovimiento_Click;
 
-             
+
             // G R I D   D E  M O V I M I E N T O S
 
 
@@ -553,7 +531,7 @@ namespace PaintControl
                 ColumnHeadersHeight = 40,
                 ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
                 {
-                    BackColor = Color.FromArgb(47,164,231),
+                    BackColor = Color.FromArgb(47, 164, 231),
                     ForeColor = Color.White,
                     Font = new Font("Segoe UI", 11F, FontStyle.Bold),
                     Alignment = DataGridViewContentAlignment.MiddleCenter
@@ -562,16 +540,12 @@ namespace PaintControl
                 {
                     BackColor = Color.White,
                     ForeColor = Color.Black,
-                    SelectionBackColor = Color.FromArgb(214,235,255),
+                    SelectionBackColor = Color.FromArgb(214, 235, 255),
                     SelectionForeColor = Color.Black,
                     Font = new Font("Segoe UI", 9.5F),
                     Padding = new Padding(5),
                     Alignment = DataGridViewContentAlignment.MiddleCenter
                 },
-                //AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle
-                //{
-                //    BackColor = Color.FromArgb(245, 248, 250)
-                //},
                 EnableHeadersVisualStyles = false,
                 GridColor = Color.LightGray,
             };
@@ -662,6 +636,7 @@ namespace PaintControl
             Label lblClienteInfo = panelMovimientos.Controls.Find("lblClienteInfo", false)[0] as Label;
             lblClienteInfo.Text = $"Movimientos de: {clienteActual.Nombre} ({clienteActual.Codigo})";
 
+            dgvMovimientos.SuspendLayout();
             dgvMovimientos.Rows.Clear();
 
             List<Movimiento> movimientos;
@@ -698,6 +673,8 @@ namespace PaintControl
                     mov.Formula
                 );
             }
+
+            dgvMovimientos.ResumeLayout();
 
             if (movimientos.Count == 0)
             {
@@ -843,7 +820,6 @@ namespace PaintControl
                 ColumnHeadersHeight = 40,
                 ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
                 {
-                    //BackColor = Color.FromArgb(74, 143, 208),
                     BackColor = Color.FromArgb(47, 164, 231),
 
                     ForeColor = Color.White,
@@ -854,18 +830,12 @@ namespace PaintControl
                 {
                     BackColor = Color.White,
                     ForeColor = Color.Black,
-                    //SelectionBackColor = Color.FromArgb(155, 185, 210),
                     SelectionBackColor = Color.FromArgb(214, 235, 255),
                     SelectionForeColor = Color.Black,
-                    //SelectionForeColor = Color.FromArgb(46, 92, 138),
                     Font = new Font("Segoe UI", 12F),
                     Padding = new Padding(5),
                     Alignment = DataGridViewContentAlignment.MiddleCenter
                 },
-                //AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle
-                //{
-                //    BackColor = Color.FromArgb(245, 248, 250)
-                //},
                 EnableHeadersVisualStyles = false,
                 BorderStyle = BorderStyle.Fixed3D,
                 GridColor = Color.LightGray,

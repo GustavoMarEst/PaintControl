@@ -1,6 +1,7 @@
 ﻿using PaintControl.Models;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Data.Entity;
 
@@ -17,6 +18,7 @@ namespace PaintControl.Data
             using (var context = new DOALDbContext())
             {
                 return context.Clientes
+                    .AsNoTracking()
                     .Where(c => c.Nombre.Contains(nombre))
                     .OrderBy(c => c.Nombre)
                     .ToList();
@@ -29,6 +31,7 @@ namespace PaintControl.Data
             using (var context = new DOALDbContext())
             {
                 return context.Clientes
+                    .AsNoTracking()
                     .FirstOrDefault(c => c.Codigo == codigo);
             }
         }
@@ -42,6 +45,7 @@ namespace PaintControl.Data
             using (var context = new DOALDbContext())
             {
                 return context.Clientes
+                    .AsNoTracking()
                     .Where(c => c.Codigo.Contains(criterio) || c.Nombre.Contains(criterio))
                     .OrderBy(c => c.Nombre)
                     .ToList();
@@ -54,6 +58,7 @@ namespace PaintControl.Data
             using (var context = new DOALDbContext())
             {
                 return context.Clientes
+                    .AsNoTracking()
                     .OrderBy(c => c.Nombre)
                     .ToList();
             }
@@ -80,8 +85,6 @@ namespace PaintControl.Data
                         ? context.Clientes.Max(c => c.Id)
                         : 0;
                     cliente.Codigo = $"CLI{(ultimoId + 1):000}";
-
-                    // Establecer fecha de registro
                     cliente.FechaRegistro = DateTime.Now;
 
                     context.Clientes.Add(cliente);
@@ -89,8 +92,11 @@ namespace PaintControl.Data
                     return true;
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.WriteLine($"Error al agregar cliente: {ex.Message}");
+                if (ex.InnerException != null)
+                    Debug.WriteLine($"  Inner: {ex.InnerException.Message}");
                 return false;
             }
         }
@@ -108,16 +114,14 @@ namespace PaintControl.Data
 
                     clienteExistente.Codigo = cliente.Codigo;
                     clienteExistente.Nombre = cliente.Nombre;
-                    //clienteExistente.Telefono = cliente.Telefono;
-                    //clienteExistente.Email = cliente.Email;
-                    //clienteExistente.Direccion = cliente.Direccion;
 
                     context.SaveChanges();
                     return true;
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.WriteLine($"Error al actualizar cliente {cliente.Id}: {ex.Message}");
                 return false;
             }
         }
@@ -138,8 +142,9 @@ namespace PaintControl.Data
                     return true;
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.WriteLine($"Error al eliminar cliente {id}: {ex.Message}");
                 return false;
             }
         }

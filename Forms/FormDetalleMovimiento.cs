@@ -14,6 +14,19 @@ namespace PaintControl.Forms
         private Movimiento movimiento;
         private bool modoEdicion;
 
+        // Referencias directas a controles (evita Controls.Find)
+        private DateTimePicker dtpFecha;
+        private TextBox txtClave;
+        private TextBox txtDescripcion;
+        private TextBox txtBase;
+        private ComboBox cmbUnidad;
+        private NumericUpDown numCantidad;
+        private NumericUpDown numPrecio;
+        private Label lblTotalValor;
+        private TextBox[] txtTipos = new TextBox[6];
+        private TextBox[] txtValores1 = new TextBox[6];
+        private TextBox[] txtValores2 = new TextBox[6];
+
         public FormDetalleMovimiento(Movimiento movimiento, bool permitirEdicion = true)
         {
             this.movimiento = movimiento;
@@ -117,7 +130,7 @@ namespace PaintControl.Forms
 
             // Fecha
             Label lblFechaLabel = CrearLabel("Fecha:", 20, yPos);
-            DateTimePicker dtpFecha = new DateTimePicker
+            dtpFecha = new DateTimePicker
             {
                 Name = "dtpFecha",
                 Location = new Point(controlX, yPos - 2),
@@ -131,48 +144,50 @@ namespace PaintControl.Forms
 
             // Clave del Color
             Label lblClaveLabel = CrearLabel("Clave del Color:", 20, yPos);
-            TextBox txtClave = new TextBox
+            txtClave = new TextBox
             {
                 Name = "txtClave",
                 Location = new Point(controlX, yPos),
                 Width = controlWidth,
                 Font = new Font("Segoe UI", 11F),
                 ReadOnly = true,
+                CharacterCasing = CharacterCasing.Upper,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             yPos += 45;
 
             // Descripción
             Label lblDescLabel = CrearLabel("Descripción:", 20, yPos);
-            TextBox txtDescripcion = new TextBox
+            txtDescripcion = new TextBox
             {
                 Name = "txtDescripcion",
                 Location = new Point(controlX, yPos),
                 Width = controlWidth,
                 Font = new Font("Segoe UI", 11F),
                 ReadOnly = true,
+                CharacterCasing = CharacterCasing.Upper,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             yPos += 45;
 
             // Base
             Label lblBaseLabel = CrearLabel("Base:", 20, yPos);
-            ComboBox cmbBase = new ComboBox
+            txtBase = new TextBox
             {
-                Name = "cmbBase",
+                Name = "txtBase",
                 Location = new Point(controlX, yPos),
                 Width = controlWidth,
                 Font = new Font("Segoe UI", 11F),
-                Enabled = false,
-                DropDownStyle = ComboBoxStyle.DropDownList,
+                ReadOnly = true,
+                MaxLength = 50,
+                CharacterCasing = CharacterCasing.Upper,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
-            cmbBase.Items.AddRange(new object[] { "Base A", "Base B", "Base C", "Base D", "Base E" });
             yPos += 45;
 
             // Unidad
             Label lblUnidadLabel = CrearLabel("Unidad:", 20, yPos);
-            ComboBox cmbUnidad = new ComboBox
+            cmbUnidad = new ComboBox
             {
                 Name = "cmbUnidad",
                 Location = new Point(controlX, yPos),
@@ -187,7 +202,7 @@ namespace PaintControl.Forms
 
             // Cantidad
             Label lblCantidadLabel = CrearLabel("Cantidad:", 20, yPos);
-            NumericUpDown numCantidad = new NumericUpDown
+            numCantidad = new NumericUpDown
             {
                 Name = "numCantidad",
                 Location = new Point(controlX, yPos),
@@ -202,7 +217,7 @@ namespace PaintControl.Forms
 
             // Precio
             Label lblPrecioLabel = CrearLabel("Precio:", 20, yPos);
-            NumericUpDown numPrecio = new NumericUpDown
+            numPrecio = new NumericUpDown
             {
                 Name = "numPrecio",
                 Location = new Point(controlX, yPos),
@@ -217,7 +232,7 @@ namespace PaintControl.Forms
 
             // Total (calculado)
             Label lblTotalLabel = CrearLabel("Total:", 20, yPos);
-            Label lblTotalValor = new Label
+            lblTotalValor = new Label
             {
                 Name = "lblTotalValor",
                 Location = new Point(controlX, yPos),
@@ -295,8 +310,10 @@ namespace PaintControl.Forms
                     Font = new Font("Segoe UI", 9.5F),
                     ReadOnly = true,
                     TextAlign = HorizontalAlignment.Center,
+                    CharacterCasing = CharacterCasing.Upper,
                     Margin = new Padding(0)
                 };
+                txtTipos[i] = txtTipo;
 
                 Label lblIgual = new Label
                 {
@@ -317,6 +334,7 @@ namespace PaintControl.Forms
                     TextAlign = HorizontalAlignment.Center,
                     Margin = new Padding(0, 0, 5, 0)
                 };
+                txtValores1[i] = txtValor1;
 
                 // Segundo número (opcional)
                 TextBox txtValor2 = new TextBox
@@ -328,6 +346,7 @@ namespace PaintControl.Forms
                     TextAlign = HorizontalAlignment.Center,
                     Margin = new Padding(0)
                 };
+                txtValores2[i] = txtValor2;
 
                 flowPanel.Controls.AddRange(new Control[] { txtTipo, lblIgual, txtValor1, txtValor2 });
 
@@ -360,7 +379,7 @@ namespace PaintControl.Forms
                 lblFechaLabel, dtpFecha,
                 lblClaveLabel, txtClave,
                 lblDescLabel, txtDescripcion,
-                lblBaseLabel, cmbBase,
+                lblBaseLabel, txtBase,
                 lblUnidadLabel, cmbUnidad,
                 lblCantidadLabel, numCantidad,
                 lblPrecioLabel, numPrecio,
@@ -466,17 +485,17 @@ namespace PaintControl.Forms
             numPrecio.ValueChanged += calcularTotal;
 
             btnEditar.Click += (s, e) => ActivarModoEdicion(
-                dtpFecha, txtClave, txtDescripcion, cmbBase, cmbUnidad,
+                dtpFecha, txtClave, txtDescripcion, txtBase, cmbUnidad,
                 numCantidad, numPrecio, panelFormulas,
                 btnEditar, btnEliminar, btnGuardar, btnCancelarEdicion);
 
             btnCancelarEdicion.Click += (s, e) => DesactivarModoEdicion(
-                dtpFecha, txtClave, txtDescripcion, cmbBase, cmbUnidad,
+                dtpFecha, txtClave, txtDescripcion, txtBase, cmbUnidad,
                 numCantidad, numPrecio, panelFormulas,
                 btnEditar, btnEliminar, btnGuardar, btnCancelarEdicion);
 
             btnGuardar.Click += (s, e) => GuardarCambios(
-                dtpFecha, txtClave, txtDescripcion, cmbBase, cmbUnidad,
+                dtpFecha, txtClave, txtDescripcion, txtBase, cmbUnidad,
                 numCantidad, numPrecio, panelFormulas);
 
             btnEliminar.Click += (s, e) => EliminarMovimiento();
@@ -510,25 +529,15 @@ namespace PaintControl.Forms
 
         private void CargarDatos()
         {
-            var dtpFecha = this.Controls.Find("dtpFecha", true)[0] as DateTimePicker;
-            var txtClave = this.Controls.Find("txtClave", true)[0] as TextBox;
-            var txtDescripcion = this.Controls.Find("txtDescripcion", true)[0] as TextBox;
-            var cmbBase = this.Controls.Find("cmbBase", true)[0] as ComboBox;
-            var cmbUnidad = this.Controls.Find("cmbUnidad", true)[0] as ComboBox;
-            var numCantidad = this.Controls.Find("numCantidad", true)[0] as NumericUpDown;
-            var numPrecio = this.Controls.Find("numPrecio", true)[0] as NumericUpDown;
-            var lblTotalValor = this.Controls.Find("lblTotalValor", true)[0] as Label;
-
             dtpFecha.Value = movimiento.Fecha;
             txtClave.Text = movimiento.ClaveColor;
             txtDescripcion.Text = movimiento.Descripcion;
-            cmbBase.SelectedItem = movimiento.Base;
+            txtBase.Text = movimiento.Base;
             cmbUnidad.SelectedItem = movimiento.Unidad;
             numCantidad.Value = movimiento.Cantidad;
             numPrecio.Value = movimiento.Precio;
             lblTotalValor.Text = $"${movimiento.Total:N2}";
 
-            // Cargar fórmula
             CargarFormula(movimiento.Formula);
         }
 
@@ -536,7 +545,6 @@ namespace PaintControl.Forms
         {
             if (string.IsNullOrWhiteSpace(formula)) return;
 
-            // Parsear la fórmula (formato: "B = 5 32|O = 2 32|T = - 13|KX = 2 36")
             string[] lineas = formula.Split(new[] { '|', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
             for (int i = 0; i < lineas.Length && i < 6; i++)
@@ -544,25 +552,15 @@ namespace PaintControl.Forms
                 string linea = lineas[i].Trim();
                 if (string.IsNullOrEmpty(linea)) continue;
 
-                // Parsear: "B = 5 32" -> tipo="B", valores=["5", "32"]
                 string[] partes = linea.Split(new[] { '=' }, StringSplitOptions.RemoveEmptyEntries);
                 if (partes.Length != 2) continue;
 
                 string tipo = partes[0].Trim();
                 string[] valores = partes[1].Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-                var txtTipo = this.Controls.Find($"txtTipo{i}", true);
-                var txtValor1 = this.Controls.Find($"txtValor1_{i}", true);
-                var txtValor2 = this.Controls.Find($"txtValor2_{i}", true);
-
-                if (txtTipo.Length > 0 && txtTipo[0] is TextBox)
-                    (txtTipo[0] as TextBox).Text = tipo;
-
-                if (valores.Length > 0 && txtValor1.Length > 0)
-                    (txtValor1[0] as TextBox).Text = valores[0];
-
-                if (valores.Length > 1 && txtValor2.Length > 0)
-                    (txtValor2[0] as TextBox).Text = valores[1];
+                if (txtTipos[i] != null) txtTipos[i].Text = tipo;
+                if (valores.Length > 0 && txtValores1[i] != null) txtValores1[i].Text = valores[0];
+                if (valores.Length > 1 && txtValores2[i] != null) txtValores2[i].Text = valores[1];
             }
         }
 
@@ -572,21 +570,12 @@ namespace PaintControl.Forms
 
             for (int i = 0; i < 6; i++)
             {
-                var txtTipo = this.Controls.Find($"txtTipo{i}", true);
-                var txtValor1 = this.Controls.Find($"txtValor1_{i}", true);
-                var txtValor2 = this.Controls.Find($"txtValor2_{i}", true);
+                if (txtTipos[i] == null || txtValores1[i] == null) continue;
+                if (string.IsNullOrWhiteSpace(txtTipos[i].Text)) continue;
 
-                if (txtTipo.Length == 0 || txtValor1.Length == 0) continue;
-
-                TextBox txtT = txtTipo[0] as TextBox;
-                TextBox txt1 = txtValor1[0] as TextBox;
-                TextBox txt2 = txtValor2.Length > 0 ? txtValor2[0] as TextBox : null;
-
-                if (string.IsNullOrWhiteSpace(txtT.Text)) continue;
-
-                string formula = $"{txtT.Text.Trim()} = {txt1.Text.Trim()}";
-                if (txt2 != null && !string.IsNullOrWhiteSpace(txt2.Text))
-                    formula += $" {txt2.Text.Trim()}";
+                string formula = $"{txtTipos[i].Text.Trim()} = {txtValores1[i].Text.Trim()}";
+                if (txtValores2[i] != null && !string.IsNullOrWhiteSpace(txtValores2[i].Text))
+                    formula += $" {txtValores2[i].Text.Trim()}";
 
                 formulas.Add(formula);
             }
@@ -595,7 +584,7 @@ namespace PaintControl.Forms
         }
 
         private void ActivarModoEdicion(DateTimePicker dtpFecha, TextBox txtClave,
-            TextBox txtDescripcion, ComboBox cmbBase, ComboBox cmbUnidad,
+            TextBox txtDescripcion, TextBox txtBase, ComboBox cmbUnidad,
             NumericUpDown numCantidad, NumericUpDown numPrecio, TableLayoutPanel panelFormulas,
             Button btnEditar, Button btnEliminar, Button btnGuardar, Button btnCancelarEdicion)
         {
@@ -604,7 +593,7 @@ namespace PaintControl.Forms
             dtpFecha.Enabled = true;
             txtClave.ReadOnly = false;
             txtDescripcion.ReadOnly = false;
-            cmbBase.Enabled = true;
+            txtBase.ReadOnly = false;
             cmbUnidad.Enabled = true;
             numCantidad.ReadOnly = false;
             numPrecio.ReadOnly = false;
@@ -612,13 +601,9 @@ namespace PaintControl.Forms
             // Habilitar campos de fórmula
             for (int i = 0; i < 6; i++)
             {
-                var txtTipo = this.Controls.Find($"txtTipo{i}", true);
-                var txtValor1 = this.Controls.Find($"txtValor1_{i}", true);
-                var txtValor2 = this.Controls.Find($"txtValor2_{i}", true);
-
-                if (txtTipo.Length > 0) (txtTipo[0] as TextBox).ReadOnly = false;
-                if (txtValor1.Length > 0) (txtValor1[0] as TextBox).ReadOnly = false;
-                if (txtValor2.Length > 0) (txtValor2[0] as TextBox).ReadOnly = false;
+                if (txtTipos[i] != null) txtTipos[i].ReadOnly = false;
+                if (txtValores1[i] != null) txtValores1[i].ReadOnly = false;
+                if (txtValores2[i] != null) txtValores2[i].ReadOnly = false;
             }
 
             btnEditar.Visible = false;
@@ -628,7 +613,7 @@ namespace PaintControl.Forms
         }
 
         private void DesactivarModoEdicion(DateTimePicker dtpFecha, TextBox txtClave,
-            TextBox txtDescripcion, ComboBox cmbBase, ComboBox cmbUnidad,
+            TextBox txtDescripcion, TextBox txtBase, ComboBox cmbUnidad,
             NumericUpDown numCantidad, NumericUpDown numPrecio, TableLayoutPanel panelFormulas,
             Button btnEditar, Button btnEliminar, Button btnGuardar, Button btnCancelarEdicion)
         {
@@ -638,7 +623,7 @@ namespace PaintControl.Forms
             dtpFecha.Enabled = false;
             txtClave.ReadOnly = true;
             txtDescripcion.ReadOnly = true;
-            cmbBase.Enabled = false;
+            txtBase.ReadOnly = true;
             cmbUnidad.Enabled = false;
             numCantidad.ReadOnly = true;
             numPrecio.ReadOnly = true;
@@ -646,13 +631,9 @@ namespace PaintControl.Forms
             // Deshabilitar campos de fórmula
             for (int i = 0; i < 6; i++)
             {
-                var txtTipo = this.Controls.Find($"txtTipo{i}", true);
-                var txtValor1 = this.Controls.Find($"txtValor1_{i}", true);
-                var txtValor2 = this.Controls.Find($"txtValor2_{i}", true);
-
-                if (txtTipo.Length > 0) (txtTipo[0] as TextBox).ReadOnly = true;
-                if (txtValor1.Length > 0) (txtValor1[0] as TextBox).ReadOnly = true;
-                if (txtValor2.Length > 0) (txtValor2[0] as TextBox).ReadOnly = true;
+                if (txtTipos[i] != null) txtTipos[i].ReadOnly = true;
+                if (txtValores1[i] != null) txtValores1[i].ReadOnly = true;
+                if (txtValores2[i] != null) txtValores2[i].ReadOnly = true;
             }
 
             btnEditar.Visible = true;
@@ -662,7 +643,7 @@ namespace PaintControl.Forms
         }
 
         private void GuardarCambios(DateTimePicker dtpFecha, TextBox txtClave,
-            TextBox txtDescripcion, ComboBox cmbBase, ComboBox cmbUnidad,
+            TextBox txtDescripcion, TextBox txtBase, ComboBox cmbUnidad,
             NumericUpDown numCantidad, NumericUpDown numPrecio, TableLayoutPanel panelFormulas)
         {
             if (string.IsNullOrWhiteSpace(txtClave.Text) || string.IsNullOrWhiteSpace(txtDescripcion.Text))
@@ -680,7 +661,7 @@ namespace PaintControl.Forms
                 Fecha = dtpFecha.Value,
                 ClaveColor = txtClave.Text.Trim(),
                 Descripcion = txtDescripcion.Text.Trim(),
-                Base = cmbBase.SelectedItem?.ToString() ?? movimiento.Base,
+                Base = txtBase.Text.Trim(),
                 Unidad = cmbUnidad.SelectedItem?.ToString() ?? movimiento.Unidad,
                 Cantidad = numCantidad.Value,
                 Precio = numPrecio.Value,

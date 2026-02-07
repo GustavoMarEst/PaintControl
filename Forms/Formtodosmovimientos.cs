@@ -11,12 +11,18 @@ namespace PaintControl.Forms
     public partial class FormTodosMovimientos : Form
     {
         private MovimientoService movimientoService;
-        private ClienteService clienteService;
         private DataGridView dgvTodosMovimientos;
         private DateTimePicker dtpFechaInicio;
         private DateTimePicker dtpFechaFin;
         private CheckBox chkFiltrarFecha;
         private Label lblTotalMovimientos;
+
+        // Fuentes cacheadas para evitar recrearlas
+        private static readonly Font FuenteTitulo = new Font("Segoe UI", 14F, FontStyle.Bold);
+        private static readonly Font FuenteNormal = new Font("Segoe UI", 9.5F);
+        private static readonly Font FuenteGrid = new Font("Segoe UI", 10F);
+        private static readonly Font FuenteGridHeader = new Font("Segoe UI", 11F, FontStyle.Bold);
+        private static readonly Font FuenteInfo = new Font("Segoe UI", 10F, FontStyle.Bold);
 
         public FormTodosMovimientos()
         {
@@ -26,7 +32,6 @@ namespace PaintControl.Forms
         private void InicializarFormulario()
         {
             movimientoService = new MovimientoService();
-            clienteService = new ClienteService();
 
             this.Text = "Todos los Movimientos";
             this.Size = new Size(1000, 700);
@@ -51,7 +56,7 @@ namespace PaintControl.Forms
             Label lblTitulo = new Label
             {
                 Text = "📋 Todos los Movimientos",
-                Font = new Font("Segoe UI", 14F, FontStyle.Bold),
+                Font = FuenteTitulo,
                 ForeColor = Color.FromArgb(46, 92, 138),
                 Location = new Point(15, 10),
                 AutoSize = true
@@ -60,14 +65,14 @@ namespace PaintControl.Forms
             Label lblFechaInicio = new Label
             {
                 Text = "Fecha Inicio:",
-                Font = new Font("Segoe UI", 9.5F),
+                Font = FuenteNormal,
                 Location = new Point(15, 45),
                 AutoSize = true
             };
 
             dtpFechaInicio = new DateTimePicker
             {
-                Font = new Font("Segoe UI", 9.5F),
+                Font = FuenteNormal,
                 Format = DateTimePickerFormat.Short,
                 Location = new Point(110, 43),
                 Size = new Size(150, 29),
@@ -77,14 +82,14 @@ namespace PaintControl.Forms
             Label lblFechaFin = new Label
             {
                 Text = "Fecha Fin:",
-                Font = new Font("Segoe UI", 9.5F),
+                Font = FuenteNormal,
                 Location = new Point(280, 45),
                 AutoSize = true
             };
 
             dtpFechaFin = new DateTimePicker
             {
-                Font = new Font("Segoe UI", 9.5F),
+                Font = FuenteNormal,
                 Format = DateTimePickerFormat.Short,
                 Location = new Point(360, 43),
                 Size = new Size(150, 29),
@@ -94,7 +99,7 @@ namespace PaintControl.Forms
             chkFiltrarFecha = new CheckBox
             {
                 Text = "Filtrar por fecha",
-                Font = new Font("Segoe UI", 9.5F),
+                Font = FuenteNormal,
                 Location = new Point(530, 45),
                 AutoSize = true
             };
@@ -103,18 +108,12 @@ namespace PaintControl.Forms
 
             dtpFechaInicio.ValueChanged += (s, e) =>
             {
-                if (chkFiltrarFecha.Checked)
-                {
-                    CargarMovimientos();
-                }
+                if (chkFiltrarFecha.Checked) CargarMovimientos();
             };
 
             dtpFechaFin.ValueChanged += (s, e) =>
             {
-                if (chkFiltrarFecha.Checked)
-                {
-                    CargarMovimientos();
-                }
+                if (chkFiltrarFecha.Checked) CargarMovimientos();
             };
 
             panelFiltros.Controls.Add(lblTitulo);
@@ -140,14 +139,14 @@ namespace PaintControl.Forms
                 ReadOnly = true,
                 AllowUserToAddRows = false,
                 RowHeadersVisible = false,
-                Font = new Font("Segoe UI", 10F),
+                Font = FuenteGrid,
                 RowTemplate = { Height = 35 },
                 ColumnHeadersHeight = 40,
                 ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
                 {
                     BackColor = Color.FromArgb(47, 164, 231),
                     ForeColor = Color.White,
-                    Font = new Font("Segoe UI", 11F, FontStyle.Bold),
+                    Font = FuenteGridHeader,
                     Alignment = DataGridViewContentAlignment.MiddleCenter
                 },
                 DefaultCellStyle = new DataGridViewCellStyle
@@ -159,13 +158,13 @@ namespace PaintControl.Forms
                     Padding = new Padding(5),
                     Alignment = DataGridViewContentAlignment.MiddleCenter
                 },
-                //AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle
-                //{
-                //    BackColor = Color.FromArgb(245, 248, 250)
-                //},
                 EnableHeadersVisualStyles = false,
                 BorderStyle = BorderStyle.None,
-                GridColor = Color.LightGray
+                GridColor = Color.LightGray,
+                AllowUserToResizeColumns = false,
+                AllowUserToResizeRows = false,
+                AllowUserToOrderColumns = false,
+                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
             };
 
             dgvTodosMovimientos.Columns.Add("NumMov", "No. Movimiento");
@@ -176,31 +175,7 @@ namespace PaintControl.Forms
             dgvTodosMovimientos.Columns.Add("Total", "Total");
 
             // Evento para mantener el color del encabezado fijo
-            dgvTodosMovimientos.CellPainting += (s, e) =>
-            {
-                if (e.RowIndex == -1 && e.ColumnIndex >= 0)
-                {
-                    e.PaintBackground(e.CellBounds, true);
-                    using (Brush brush = new SolidBrush(Color.FromArgb(47, 164, 231)))
-                    {
-                        e.Graphics.FillRectangle(brush, e.CellBounds);
-                    }
-                    using (Brush textBrush = new SolidBrush(Color.White))
-                    {
-                        StringFormat sf = new StringFormat
-                        {
-                            Alignment = StringAlignment.Center,
-                            LineAlignment = StringAlignment.Center
-                        };
-                        e.Graphics.DrawString(e.Value?.ToString() ?? "",
-                            new Font("Segoe UI", 11F, FontStyle.Bold),
-                            textBrush,
-                            e.CellBounds,
-                            sf);
-                    }
-                    e.Handled = true;
-                }
-            };
+            dgvTodosMovimientos.CellPainting += DgvTodosMovimientos_CellPainting;
 
             dgvTodosMovimientos.Columns["NumMov"].FillWeight = 80;
             dgvTodosMovimientos.Columns["Fecha"].FillWeight = 80;
@@ -212,11 +187,6 @@ namespace PaintControl.Forms
             dgvTodosMovimientos.Columns["Cantidad"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             dgvTodosMovimientos.Columns["Total"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             dgvTodosMovimientos.Columns["Total"].DefaultCellStyle.Format = "C2";
-
-            dgvTodosMovimientos.AllowUserToResizeColumns = false;
-            dgvTodosMovimientos.AllowUserToResizeRows = false;
-            dgvTodosMovimientos.AllowUserToOrderColumns = false;
-            dgvTodosMovimientos.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
 
             foreach (DataGridViewColumn col in dgvTodosMovimientos.Columns)
             {
@@ -239,7 +209,7 @@ namespace PaintControl.Forms
 
             lblTotalMovimientos = new Label
             {
-                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                Font = FuenteInfo,
                 ForeColor = Color.FromArgb(46, 92, 138),
                 Location = new Point(15, 15),
                 AutoSize = true
@@ -250,6 +220,32 @@ namespace PaintControl.Forms
             this.Controls.Add(panelGrid);
             this.Controls.Add(panelFiltros);
             this.Controls.Add(panelInferior);
+        }
+
+        private void DgvTodosMovimientos_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
+        {
+            if (e.RowIndex == -1 && e.ColumnIndex >= 0)
+            {
+                e.PaintBackground(e.CellBounds, true);
+                using (Brush brush = new SolidBrush(Color.FromArgb(47, 164, 231)))
+                {
+                    e.Graphics.FillRectangle(brush, e.CellBounds);
+                }
+                using (Brush textBrush = new SolidBrush(Color.White))
+                {
+                    StringFormat sf = new StringFormat
+                    {
+                        Alignment = StringAlignment.Center,
+                        LineAlignment = StringAlignment.Center
+                    };
+                    e.Graphics.DrawString(e.Value?.ToString() ?? "",
+                        FuenteGridHeader,
+                        textBrush,
+                        e.CellBounds,
+                        sf);
+                }
+                e.Handled = true;
+            }
         }
 
         private void ChkFiltrarFecha_CheckedChanged(object sender, EventArgs e)
@@ -268,6 +264,7 @@ namespace PaintControl.Forms
 
         private void CargarMovimientos()
         {
+            dgvTodosMovimientos.SuspendLayout();
             dgvTodosMovimientos.Rows.Clear();
 
             List<Movimiento> movimientos;
@@ -276,23 +273,23 @@ namespace PaintControl.Forms
             {
                 DateTime fechaInicio = dtpFechaInicio.Value.Date;
                 DateTime fechaFin = dtpFechaFin.Value.Date.AddDays(1).AddSeconds(-1);
-
                 movimientos = movimientoService.ObtenerTodosPorFechas(fechaInicio, fechaFin);
             }
             else
             {
+                // ObtenerTodos() ya incluye .Include(m => m.Cliente)
                 movimientos = movimientoService.ObtenerTodos();
             }
 
-            // Ordenar de más reciente a más antiguo
-            movimientos = movimientos.OrderByDescending(m => m.Fecha).ThenByDescending(m => m.NumeroMovimiento).ToList();
-
-            // Obtener todos los clientes para mostrar sus nombres
-            var clientes = clienteService.ObtenerTodos().ToDictionary(c => c.Id, c => c.Nombre);
+            movimientos = movimientos
+                .OrderByDescending(m => m.Fecha)
+                .ThenByDescending(m => m.NumeroMovimiento)
+                .ToList();
 
             foreach (var mov in movimientos)
             {
-                string nombreCliente = clientes.ContainsKey(mov.ClienteId) ? clientes[mov.ClienteId] : "Cliente desconocido";
+                // Usar la relación de navegación directamente (viene con Include)
+                string nombreCliente = mov.Cliente?.Nombre ?? "Cliente desconocido";
 
                 dgvTodosMovimientos.Rows.Add(
                     mov.NumeroMovimiento,
@@ -303,21 +300,17 @@ namespace PaintControl.Forms
                     mov.Total
                 );
 
-                // Guardar el objeto Movimiento en el Tag de la fila
                 dgvTodosMovimientos.Rows[dgvTodosMovimientos.Rows.Count - 1].Tag = mov;
             }
+
+            dgvTodosMovimientos.ResumeLayout();
 
             // Actualizar información de totales
             if (movimientos.Count == 0)
             {
-                if (chkFiltrarFecha.Checked)
-                {
-                    lblTotalMovimientos.Text = "Sin movimientos en el rango de fechas seleccionado";
-                }
-                else
-                {
-                    lblTotalMovimientos.Text = "Sin movimientos registrados";
-                }
+                lblTotalMovimientos.Text = chkFiltrarFecha.Checked
+                    ? "Sin movimientos en el rango de fechas seleccionado"
+                    : "Sin movimientos registrados";
             }
             else
             {
@@ -331,34 +324,28 @@ namespace PaintControl.Forms
             if (e.RowIndex < 0) return;
 
             Movimiento movimiento = dgvTodosMovimientos.Rows[e.RowIndex].Tag as Movimiento;
+            if (movimiento == null) return;
 
-            if (movimiento != null)
+            FormDetalleMovimiento formDetalle = new FormDetalleMovimiento(movimiento);
+
+            if (formDetalle.ShowDialog(this) == DialogResult.OK)
             {
-                FormDetalleMovimiento formDetalle = new FormDetalleMovimiento(movimiento);
-
-                if (formDetalle.ShowDialog(this) == DialogResult.OK)
+                if (formDetalle.Eliminado)
                 {
-                    if (formDetalle.Eliminado)
+                    if (movimientoService.EliminarMovimiento(movimiento.Id))
                     {
-                        bool exito = movimientoService.EliminarMovimiento(movimiento.Id);
-
-                        if (exito)
-                        {
-                            MessageBox.Show("El movimiento se eliminó correctamente.",
-                                "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            CargarMovimientos();
-                        }
+                        MessageBox.Show("El movimiento se eliminó correctamente.",
+                            "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        CargarMovimientos();
                     }
-                    else if (formDetalle.Modificado)
+                }
+                else if (formDetalle.Modificado)
+                {
+                    if (movimientoService.ActualizarMovimiento(formDetalle.MovimientoActualizado))
                     {
-                        bool exito = movimientoService.ActualizarMovimiento(formDetalle.MovimientoActualizado);
-
-                        if (exito)
-                        {
-                            MessageBox.Show("El movimiento se actualizó correctamente.",
-                                "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            CargarMovimientos();
-                        }
+                        MessageBox.Show("El movimiento se actualizó correctamente.",
+                            "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        CargarMovimientos();
                     }
                 }
             }
