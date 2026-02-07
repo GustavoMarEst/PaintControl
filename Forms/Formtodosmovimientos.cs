@@ -24,6 +24,9 @@ namespace PaintControl.Forms
         private static readonly Font FuenteGridHeader = new Font("Segoe UI", 11F, FontStyle.Bold);
         private static readonly Font FuenteInfo = new Font("Segoe UI", 10F, FontStyle.Bold);
 
+        // Lista de movimientos cargada (para evitar consultas repetidas al ordenar)
+        private List<Movimiento> todosLosMovimientos;
+
         public FormTodosMovimientos()
         {
             InicializarFormulario();
@@ -174,8 +177,84 @@ namespace PaintControl.Forms
             dgvTodosMovimientos.Columns.Add("Cantidad", "Cantidad");
             dgvTodosMovimientos.Columns.Add("Total", "Total");
 
-            // Evento para mantener el color del encabezado fijo
-            dgvTodosMovimientos.CellPainting += DgvTodosMovimientos_CellPainting;
+            // ✅ EVENTO CELLPAINTING CON FLECHAS DE ORDENAMIENTO
+            dgvTodosMovimientos.CellPainting += (s, e) =>
+            {
+                if (e.RowIndex == -1 && e.ColumnIndex >= 0)
+                {
+                    e.PaintBackground(e.CellBounds, true);
+                    using (Brush brush = new SolidBrush(Color.FromArgb(47, 164, 231)))
+                    {
+                        e.Graphics.FillRectangle(brush, e.CellBounds);
+                    }
+
+                    // Calcular espacio para la flecha
+                    int arrowWidth = 20;
+                    Rectangle textBounds = e.CellBounds;
+
+                    // Si hay ordenamiento activo en esta columna, dejar espacio para la flecha
+                    DataGridView grid = s as DataGridView;
+                    if (grid.SortedColumn != null && grid.SortedColumn.Index == e.ColumnIndex)
+                    {
+                        textBounds.Width -= arrowWidth;
+                    }
+
+                    // Dibujar el texto del encabezado
+                    using (Brush textBrush = new SolidBrush(Color.White))
+                    {
+                        StringFormat sf = new StringFormat
+                        {
+                            Alignment = StringAlignment.Center,
+                            LineAlignment = StringAlignment.Center
+                        };
+                        e.Graphics.DrawString(e.Value?.ToString() ?? "",
+                            FuenteGridHeader,
+                            textBrush,
+                            textBounds,
+                            sf);
+                    }
+
+                    // Dibujar la flecha de ordenamiento si esta columna está ordenada
+                    if (grid.SortedColumn != null && grid.SortedColumn.Index == e.ColumnIndex)
+                    {
+                        int arrowX = e.CellBounds.Right - arrowWidth;
+                        int arrowY = e.CellBounds.Y + (e.CellBounds.Height - 8) / 2;
+
+                        System.Drawing.Drawing2D.GraphicsPath path = new System.Drawing.Drawing2D.GraphicsPath();
+
+                        if (grid.SortOrder == SortOrder.Ascending)
+                        {
+                            // Flecha hacia arriba (triángulo)
+                            Point[] arrowPoints = new Point[]
+                            {
+                                new Point(arrowX + 5, arrowY + 8),      // Izquierda abajo
+                                new Point(arrowX + 10, arrowY),         // Punta arriba
+                                new Point(arrowX + 15, arrowY + 8)      // Derecha abajo
+                            };
+                            path.AddPolygon(arrowPoints);
+                        }
+                        else if (grid.SortOrder == SortOrder.Descending)
+                        {
+                            // Flecha hacia abajo (triángulo invertido)
+                            Point[] arrowPoints = new Point[]
+                            {
+                                new Point(arrowX + 5, arrowY),          // Izquierda arriba
+                                new Point(arrowX + 10, arrowY + 8),     // Punta abajo
+                                new Point(arrowX + 15, arrowY)          // Derecha arriba
+                            };
+                            path.AddPolygon(arrowPoints);
+                        }
+
+                        using (Brush arrowBrush = new SolidBrush(Color.White))
+                        {
+                            e.Graphics.FillPath(arrowBrush, path);
+                        }
+                        path.Dispose();
+                    }
+
+                    e.Handled = true;
+                }
+            };
 
             dgvTodosMovimientos.Columns["NumMov"].FillWeight = 80;
             dgvTodosMovimientos.Columns["Fecha"].FillWeight = 80;
@@ -188,10 +267,53 @@ namespace PaintControl.Forms
             dgvTodosMovimientos.Columns["Total"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             dgvTodosMovimientos.Columns["Total"].DefaultCellStyle.Format = "C2";
 
+            // ✅ HABILITAR ordenamiento por clic en columnas
             foreach (DataGridViewColumn col in dgvTodosMovimientos.Columns)
             {
-                col.SortMode = DataGridViewColumnSortMode.NotSortable;
+                col.SortMode = DataGridViewColumnSortMode.Automatic;
             }
+
+            // ✅ EVENTO DE ORDENAMIENTO PERSONALIZADO
+            dgvTodosMovimientos.SortCompare += (s, e) =>
+            {
+                if (e.Column.Name == "Fecha")
+                {
+                    // Obtener los objetos Movimiento de las filas
+                    Movimiento mov1 = dgvTodosMovimientos.Rows[e.RowIndex1].Tag as Movimiento;
+                    Movimiento mov2 = dgvTodosMovimientos.Rows[e.RowIndex2].Tag as Movimiento;
+
+                    // Comparar por fecha real, no por el texto
+                    e.SortResult = DateTime.Compare(mov1.Fecha, mov2.Fecha);
+                    e.Handled = true;
+                }
+                else if (e.Column.Name == "NumMov")
+                {
+                    // Ordenar por número de movimiento (entero)
+                    Movimiento mov1 = dgvTodosMovimientos.Rows[e.RowIndex1].Tag as Movimiento;
+                    Movimiento mov2 = dgvTodosMovimientos.Rows[e.RowIndex2].Tag as Movimiento;
+
+                    e.SortResult = mov1.NumeroMovimiento.CompareTo(mov2.NumeroMovimiento);
+                    e.Handled = true;
+                }
+                else if (e.Column.Name == "Cantidad")
+                {
+                    // Ordenar por cantidad (decimal)
+                    Movimiento mov1 = dgvTodosMovimientos.Rows[e.RowIndex1].Tag as Movimiento;
+                    Movimiento mov2 = dgvTodosMovimientos.Rows[e.RowIndex2].Tag as Movimiento;
+
+                    e.SortResult = mov1.Cantidad.CompareTo(mov2.Cantidad);
+                    e.Handled = true;
+                }
+                else if (e.Column.Name == "Total")
+                {
+                    // Ordenar por total (decimal)
+                    Movimiento mov1 = dgvTodosMovimientos.Rows[e.RowIndex1].Tag as Movimiento;
+                    Movimiento mov2 = dgvTodosMovimientos.Rows[e.RowIndex2].Tag as Movimiento;
+
+                    e.SortResult = mov1.Total.CompareTo(mov2.Total);
+                    e.Handled = true;
+                }
+            };
 
             // Evento de doble clic para ver detalles
             dgvTodosMovimientos.CellDoubleClick += DgvTodosMovimientos_CellDoubleClick;
@@ -220,32 +342,6 @@ namespace PaintControl.Forms
             this.Controls.Add(panelGrid);
             this.Controls.Add(panelFiltros);
             this.Controls.Add(panelInferior);
-        }
-
-        private void DgvTodosMovimientos_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
-        {
-            if (e.RowIndex == -1 && e.ColumnIndex >= 0)
-            {
-                e.PaintBackground(e.CellBounds, true);
-                using (Brush brush = new SolidBrush(Color.FromArgb(47, 164, 231)))
-                {
-                    e.Graphics.FillRectangle(brush, e.CellBounds);
-                }
-                using (Brush textBrush = new SolidBrush(Color.White))
-                {
-                    StringFormat sf = new StringFormat
-                    {
-                        Alignment = StringAlignment.Center,
-                        LineAlignment = StringAlignment.Center
-                    };
-                    e.Graphics.DrawString(e.Value?.ToString() ?? "",
-                        FuenteGridHeader,
-                        textBrush,
-                        e.CellBounds,
-                        sf);
-                }
-                e.Handled = true;
-            }
         }
 
         private void ChkFiltrarFecha_CheckedChanged(object sender, EventArgs e)
@@ -281,6 +377,10 @@ namespace PaintControl.Forms
                 movimientos = movimientoService.ObtenerTodos();
             }
 
+            // Guardar en variable de clase para evitar consultas repetidas
+            todosLosMovimientos = movimientos;
+
+            // Ordenamiento inicial: más recientes primero
             movimientos = movimientos
                 .OrderByDescending(m => m.Fecha)
                 .ThenByDescending(m => m.NumeroMovimiento)
@@ -300,6 +400,7 @@ namespace PaintControl.Forms
                     mov.Total
                 );
 
+                // ✅ IMPORTANTE: Guardar el objeto completo en Tag para ordenamiento
                 dgvTodosMovimientos.Rows[dgvTodosMovimientos.Rows.Count - 1].Tag = mov;
             }
 

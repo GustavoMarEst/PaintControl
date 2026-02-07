@@ -94,7 +94,7 @@ namespace PaintControl
 
             if (dgvMovimientos != null)
             {
-                dgvMovimientos.Size = new Size(anchoDisponible - 40, altoDisponible - 130);
+                dgvMovimientos.Size = new Size(anchoDisponible - 30, altoDisponible - 130);
             }
 
             if (btnAgregarMovimiento != null)
@@ -514,7 +514,7 @@ namespace PaintControl
             dgvMovimientos = new DataGridView
             {
                 Location = new Point(15, 85),
-                Size = new Size(anchoDisponible - 40, altoDisponible - 130),
+                Size = new Size(anchoDisponible - 30, altoDisponible - 130),
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                 MultiSelect = false,
@@ -769,7 +769,6 @@ namespace PaintControl
                 Text = "Lista de Clientes",
                 Size = new Size(900, 600),
                 StartPosition = FormStartPosition.CenterParent
-
             };
 
             Panel topPanel = new Panel
@@ -779,32 +778,19 @@ namespace PaintControl
                 Padding = new Padding(10)
             };
 
-            Label lblOrdenar = new Label
+            Label lblTitulo = new Label
             {
-                Text = "Ordenar por:",
+                Text = "Lista de Clientes",
                 Location = new Point(10, 15),
                 AutoSize = true,
-                Font = new Font("Segoe UI", 14F, FontStyle.Bold)
+                Font = new Font("Segoe UI", 14F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(46, 92, 138)
             };
 
-            ComboBox cmbOrdenar = new ComboBox
-            {
-                Location = new Point(160, 12),
-                Width = 260,
-                Height = 35,
-                Font = new Font("Segoe UI", 13F),
-                DropDownStyle = ComboBoxStyle.DropDownList
-            };
-            cmbOrdenar.Items.AddRange(new object[] {
-                "Nombre (A-Z)",
-                "Nombre (Z-A)",
-                "Más reciente",
-                "Más antiguo"
-            });
-            cmbOrdenar.SelectedIndex = 0;
+            topPanel.Controls.Add(lblTitulo);
 
-            topPanel.Controls.Add(lblOrdenar);
-            topPanel.Controls.Add(cmbOrdenar);
+            // Cargar todos los clientes UNA SOLA VEZ
+            var todosLosClientes = clienteService.ObtenerTodos();
 
             DataGridView dgv = new DataGridView
             {
@@ -821,7 +807,6 @@ namespace PaintControl
                 ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
                 {
                     BackColor = Color.FromArgb(47, 164, 231),
-
                     ForeColor = Color.White,
                     Font = new Font("Segoe UI", 13F, FontStyle.Bold),
                     Alignment = DataGridViewContentAlignment.MiddleCenter
@@ -845,6 +830,7 @@ namespace PaintControl
             dgv.Columns.Add("Nombre", "Nombre");
             dgv.Columns.Add("FechaRegistro", "Fecha de Registro");
 
+            // ✅ EVENTO CELLPAINTING CON FLECHAS DE ORDENAMIENTO
             dgv.CellPainting += (s, e) =>
             {
                 if (e.RowIndex == -1 && e.ColumnIndex >= 0)
@@ -854,6 +840,19 @@ namespace PaintControl
                     {
                         e.Graphics.FillRectangle(brush, e.CellBounds);
                     }
+
+                    // Calcular espacio para la flecha
+                    int arrowWidth = 20;
+                    Rectangle textBounds = e.CellBounds;
+
+                    // Si hay ordenamiento activo en esta columna, dejar espacio para la flecha
+                    DataGridView grid = s as DataGridView;
+                    if (grid.SortedColumn != null && grid.SortedColumn.Index == e.ColumnIndex)
+                    {
+                        textBounds.Width -= arrowWidth;
+                    }
+
+                    // Dibujar el texto del encabezado
                     using (Brush textBrush = new SolidBrush(Color.White))
                     {
                         StringFormat sf = new StringFormat
@@ -864,9 +863,48 @@ namespace PaintControl
                         e.Graphics.DrawString(e.Value?.ToString() ?? "",
                             new Font("Segoe UI", 13F, FontStyle.Bold),
                             textBrush,
-                            e.CellBounds,
+                            textBounds,
                             sf);
                     }
+
+                    // Dibujar la flecha de ordenamiento si esta columna está ordenada
+                    if (grid.SortedColumn != null && grid.SortedColumn.Index == e.ColumnIndex)
+                    {
+                        int arrowX = e.CellBounds.Right - arrowWidth;
+                        int arrowY = e.CellBounds.Y + (e.CellBounds.Height - 8) / 2;
+
+                        System.Drawing.Drawing2D.GraphicsPath path = new System.Drawing.Drawing2D.GraphicsPath();
+
+                        if (grid.SortOrder == SortOrder.Ascending)
+                        {
+                            // Flecha hacia arriba (triángulo)
+                            Point[] arrowPoints = new Point[]
+                            {
+                                new Point(arrowX + 5, arrowY + 8),      // Izquierda abajo
+                                new Point(arrowX + 10, arrowY),         // Punta arriba
+                                new Point(arrowX + 15, arrowY + 8)      // Derecha abajo
+                            };
+                            path.AddPolygon(arrowPoints);
+                        }
+                        else if (grid.SortOrder == SortOrder.Descending)
+                        {
+                            // Flecha hacia abajo (triángulo invertido)
+                            Point[] arrowPoints = new Point[]
+                            {
+                                new Point(arrowX + 5, arrowY),          // Izquierda arriba
+                                new Point(arrowX + 10, arrowY + 8),     // Punta abajo
+                                new Point(arrowX + 15, arrowY)          // Derecha arriba
+                            };
+                            path.AddPolygon(arrowPoints);
+                        }
+
+                        using (Brush arrowBrush = new SolidBrush(Color.White))
+                        {
+                            e.Graphics.FillPath(arrowBrush, path);
+                        }
+                        path.Dispose();
+                    }
+
                     e.Handled = true;
                 }
             };
@@ -878,49 +916,43 @@ namespace PaintControl
             dgv.ColumnHeadersHeightSizeMode =
                 DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
 
+            // ✅ HABILITAR ordenamiento por clic en columnas
             foreach (DataGridViewColumn col in dgv.Columns)
             {
-                col.SortMode = DataGridViewColumnSortMode.NotSortable;
+                col.SortMode = DataGridViewColumnSortMode.Automatic;
             }
 
             dgv.Columns["Codigo"].FillWeight = 20;
             dgv.Columns["Nombre"].FillWeight = 40;
             dgv.Columns["FechaRegistro"].FillWeight = 40;
 
-            Action cargarClientes = () =>
+            // Cargar clientes inicialmente ordenados por nombre (A-Z)
+            dgv.SuspendLayout();
+            foreach (var cliente in todosLosClientes.OrderBy(c => c.Nombre))
             {
-                dgv.Rows.Clear();
-                var clientes = clienteService.ObtenerTodos();
+                dgv.Rows.Add(
+                    cliente.Codigo,
+                    cliente.Nombre,
+                    cliente.FechaRegistro.ToShortDateString()
+                );
+                dgv.Rows[dgv.Rows.Count - 1].Tag = cliente;
+            }
+            dgv.ResumeLayout();
 
-                switch (cmbOrdenar.SelectedIndex)
+            // Evento de ordenamiento personalizado para la columna de fecha
+            dgv.SortCompare += (s, e) =>
+            {
+                if (e.Column.Name == "FechaRegistro")
                 {
-                    case 0: // Nombre A-Z
-                        clientes = clientes.OrderBy(c => c.Nombre).ToList();
-                        break;
-                    case 1: // Nombre Z-A
-                        clientes = clientes.OrderByDescending(c => c.Nombre).ToList();
-                        break;
-                    case 2: // Más reciente
-                        clientes = clientes.OrderByDescending(c => c.FechaRegistro).ToList();
-                        break;
-                    case 3: // Más antiguo
-                        clientes = clientes.OrderBy(c => c.FechaRegistro).ToList();
-                        break;
-                }
+                    // Obtener los objetos Cliente de las filas
+                    Cliente cliente1 = dgv.Rows[e.RowIndex1].Tag as Cliente;
+                    Cliente cliente2 = dgv.Rows[e.RowIndex2].Tag as Cliente;
 
-                foreach (var cliente in clientes)
-                {
-                    dgv.Rows.Add(
-                        cliente.Codigo,
-                        cliente.Nombre,
-                        cliente.FechaRegistro.ToShortDateString()
-                    );
-                    dgv.Rows[dgv.Rows.Count - 1].Tag = cliente;
+                    // Comparar por fecha real, no por el texto
+                    e.SortResult = DateTime.Compare(cliente1.FechaRegistro, cliente2.FechaRegistro);
+                    e.Handled = true;
                 }
             };
-
-            cargarClientes();
-            cmbOrdenar.SelectedIndexChanged += (s, e) => cargarClientes();
 
             dgv.CellDoubleClick += (s, e) =>
             {

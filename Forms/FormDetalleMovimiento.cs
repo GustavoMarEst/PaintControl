@@ -1,6 +1,8 @@
 ﻿using PaintControl.Models;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 namespace PaintControl.Forms
@@ -14,7 +16,7 @@ namespace PaintControl.Forms
         private Movimiento movimiento;
         private bool modoEdicion;
 
-        // Referencias directas a controles (evita Controls.Find)
+        // Referencias directas a controles principales
         private DateTimePicker dtpFecha;
         private TextBox txtClave;
         private TextBox txtDescripcion;
@@ -23,9 +25,48 @@ namespace PaintControl.Forms
         private NumericUpDown numCantidad;
         private NumericUpDown numPrecio;
         private Label lblTotalValor;
+        private TableLayoutPanel panelFormulas;
+
+        // Botones
+        private Button btnEditar;
+        private Button btnEliminar;
+        private Button btnGuardar;
+        private Button btnCancelarEdicion;
+
+        // Referencias directas a controles de formula
         private TextBox[] txtTipos = new TextBox[6];
         private TextBox[] txtValores1 = new TextBox[6];
         private TextBox[] txtValores2 = new TextBox[6];
+
+        // Colores del tema
+        private static readonly Color AzulPrimario = Color.FromArgb(47, 164, 231);
+        private static readonly Color AzulOscuro = Color.FromArgb(46, 92, 138);
+        private static readonly Color FondoTarjeta = Color.FromArgb(244, 247, 251);
+        private static readonly Color BordeTarjeta = Color.FromArgb(226, 232, 240);
+        private static readonly Color TextoSecundario = Color.FromArgb(139, 149, 166);
+        private static readonly Color TextoLabel = Color.FromArgb(90, 101, 119);
+        private static readonly Color VerdePrimario = Color.FromArgb(56, 161, 105);
+        private static readonly Color VerdeOscuro = Color.FromArgb(34, 118, 61);
+        private static readonly Color FondoVerde = Color.FromArgb(240, 255, 244);
+        private static readonly Color BordeVerde = Color.FromArgb(198, 246, 213);
+        private static readonly Color FondoFormula = Color.FromArgb(248, 250, 252);
+        private static readonly Color GrisBotonSecundario = Color.FromArgb(226, 232, 240);
+        private static readonly Color RojoEliminar = Color.FromArgb(220, 53, 69);
+        private static readonly Color AzulEditar = Color.FromArgb(74, 143, 208);
+
+        // Fuentes cacheadas
+        private static readonly Font FuenteTitulo = new Font("Segoe UI", 16F, FontStyle.Bold);
+        private static readonly Font FuenteBadge = new Font("Segoe UI", 9F, FontStyle.Bold);
+        private static readonly Font FuenteInfoLabel = new Font("Segoe UI", 8.5F, FontStyle.Bold);
+        private static readonly Font FuenteInfoValor = new Font("Segoe UI", 11F, FontStyle.Bold);
+        private static readonly Font FuenteSeccion = new Font("Segoe UI", 10F, FontStyle.Bold);
+        private static readonly Font FuenteFieldLabel = new Font("Segoe UI", 9F, FontStyle.Bold);
+        private static readonly Font FuenteInput = new Font("Segoe UI", 11F);
+        private static readonly Font FuenteBoton = new Font("Segoe UI", 11F, FontStyle.Bold);
+        private static readonly Font FuenteTotalLabel = new Font("Segoe UI", 11F, FontStyle.Bold);
+        private static readonly Font FuenteTotalValor = new Font("Segoe UI", 18F, FontStyle.Bold);
+        private static readonly Font FuenteFormula = new Font("Segoe UI", 9.5F);
+        private static readonly Font FuenteIgual = new Font("Segoe UI", 10F, FontStyle.Bold);
 
         public FormDetalleMovimiento(Movimiento movimiento, bool permitirEdicion = true)
         {
@@ -39,278 +80,451 @@ namespace PaintControl.Forms
         private void ConfigurarFormulario(bool permitirEdicion)
         {
             this.Text = $"Detalle de Movimiento #{movimiento.NumeroMovimiento}";
-            this.MinimumSize = new Size(750, 720);
-            this.Size = new Size(750, 720);
+            this.Size = new Size(780, 780);
             this.StartPosition = FormStartPosition.CenterParent;
-            this.FormBorderStyle = FormBorderStyle.Sizable;
-            this.MaximizeBox = true;
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
             this.MinimizeBox = true;
             this.BackColor = Color.White;
 
-            // TableLayoutPanel principal para diseño responsivo
-            TableLayoutPanel mainLayout = new TableLayoutPanel
+            // ===== HEADER AZUL SOLIDO =====
+            Panel headerPanel = new Panel
             {
-                Name = "mainLayout",
-                Dock = DockStyle.Fill,
-                Padding = new Padding(20),
-                BackColor = Color.White,
-                ColumnCount = 1,
-                RowCount = 3,
-                AutoScroll = true
-            };
-            mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Título
-            mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F)); // Panel de información
-            mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Botones
-
-            // Título
-            Label lblTitulo = new Label
-            {
-                Text = $"Movimiento #{movimiento.NumeroMovimiento}",
-                Font = new Font("Segoe UI", 18F, FontStyle.Bold),
-                AutoSize = true,
-                ForeColor = Color.FromArgb(46, 92, 138),
-                Margin = new Padding(10, 0, 10, 20),
-                Anchor = AnchorStyles.Left
-            };
-
-            // Panel de información con scroll
-            Panel scrollablePanel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                AutoScroll = true,
-                BackColor = Color.White,
-                Margin = new Padding(0)
-            };
-
-            Panel infoPanel = new Panel
-            {
-                Name = "infoPanel",
-                BackColor = Color.FromArgb(245, 248, 250),
-                BorderStyle = BorderStyle.FixedSingle,
-                AutoSize = true,
-                MinimumSize = new Size(600, 520),
-                Padding = new Padding(20),
+                Height = 60,
+                BackColor = AzulPrimario,
                 Dock = DockStyle.Top
             };
 
-            int yPos = 20;
-            int labelWidth = 150;
-            int controlX = labelWidth + 30;
-            int controlWidth = 0; // Se calculará dinámicamente
-
-            // Función auxiliar para calcular el ancho de los controles
-            EventHandler ResizeControls = (s, e) =>
+            Label lblTitulo = new Label
             {
-                int newControlWidth = infoPanel.ClientSize.Width - controlX - 40;
-                if (newControlWidth < 200) newControlWidth = 200;
-
-                foreach (Control ctrl in infoPanel.Controls)
-                {
-                    if (ctrl is TextBox || ctrl is ComboBox || ctrl is DateTimePicker)
-                    {
-                        if (ctrl.Left == controlX)
-                        {
-                            ctrl.Width = newControlWidth;
-                        }
-                    }
-                }
-
-                // Ajustar panel de fórmulas
-                Control[] panelFormulasArray = infoPanel.Controls.Find("panelFormulas", false);
-                if (panelFormulasArray.Length > 0)
-                {
-                    panelFormulasArray[0].Width = infoPanel.ClientSize.Width - 40;
-                }
+                Text = $"📋  Movimiento #{movimiento.NumeroMovimiento}",
+                Font = FuenteTitulo,
+                ForeColor = Color.White,
+                Location = new Point(24, 15),
+                AutoSize = true
             };
-            infoPanel.Resize += ResizeControls;
 
-            // Calcular ancho inicial
-            controlWidth = infoPanel.MinimumSize.Width - controlX - 60;
+            Label lblBadge = new Label
+            {
+                Text = "DETALLE",
+                Font = FuenteBadge,
+                ForeColor = Color.White,
+                BackColor = Color.FromArgb(60, 255, 255, 255),
+                AutoSize = true,
+                Padding = new Padding(10, 4, 10, 4),
+                TextAlign = ContentAlignment.MiddleCenter
+            };
 
-            // Fecha
-            Label lblFechaLabel = CrearLabel("Fecha:", 20, yPos);
+            headerPanel.Controls.Add(lblTitulo);
+            headerPanel.Controls.Add(lblBadge);
+
+            headerPanel.Layout += (s, e) =>
+            {
+                lblBadge.Location = new Point(headerPanel.Width - lblBadge.Width - 24, (headerPanel.Height - lblBadge.Height) / 2);
+            };
+
+            // ===== PANEL SCROLLABLE =====
+            Panel scrollPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                AutoScroll = true,
+                BackColor = Color.White
+            };
+
+            Panel body = new Panel
+            {
+                Location = new Point(0, 0),
+                Size = new Size(760, 680),
+                BackColor = Color.White
+            };
+
+            int padX = 28;
+            int y = 20;
+            int fullWidth = 700;
+            int halfWidth = 340;
+            int gap = 20;
+
+            // ===== INFO CARDS =====
+            int cardWidth = (fullWidth - gap * 2) / 3;
+            int cardHeight = 64;
+
+            Panel card1 = CrearInfoCard("Nº MOVIMIENTO", movimiento.NumeroMovimiento.ToString(), padX, y, cardWidth, cardHeight);
+
             dtpFecha = new DateTimePicker
             {
-                Name = "dtpFecha",
-                Location = new Point(controlX, yPos - 2),
-                Width = controlWidth,
                 Format = DateTimePickerFormat.Short,
-                Enabled = false,
-                Font = new Font("Segoe UI", 11F),
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+                Font = FuenteInput,
+                Location = new Point(-300, -300),
+                Size = new Size(1, 1),
+                Enabled = false
             };
-            yPos += 45;
+            Panel card2 = CrearInfoCard("FECHA", movimiento.Fecha.ToShortDateString(), padX + cardWidth + gap, y, cardWidth, cardHeight);
 
-            // Clave del Color
-            Label lblClaveLabel = CrearLabel("Clave del Color:", 20, yPos);
-            txtClave = new TextBox
-            {
-                Name = "txtClave",
-                Location = new Point(controlX, yPos),
-                Width = controlWidth,
-                Font = new Font("Segoe UI", 11F),
-                ReadOnly = true,
-                CharacterCasing = CharacterCasing.Upper,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
-            };
-            yPos += 45;
+            string nombreCliente = movimiento.Cliente != null ? movimiento.Cliente.Nombre : "—";
+            Panel card3 = CrearInfoCard("CLIENTE", nombreCliente, padX + (cardWidth + gap) * 2, y, cardWidth, cardHeight);
 
-            // Descripción
-            Label lblDescLabel = CrearLabel("Descripción:", 20, yPos);
-            txtDescripcion = new TextBox
-            {
-                Name = "txtDescripcion",
-                Location = new Point(controlX, yPos),
-                Width = controlWidth,
-                Font = new Font("Segoe UI", 11F),
-                ReadOnly = true,
-                CharacterCasing = CharacterCasing.Upper,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
-            };
-            yPos += 45;
+            body.Controls.Add(card1);
+            body.Controls.Add(card2);
+            body.Controls.Add(card3);
+            body.Controls.Add(dtpFecha);
+            y += cardHeight + 20;
 
-            // Base
-            Label lblBaseLabel = CrearLabel("Base:", 20, yPos);
-            txtBase = new TextBox
-            {
-                Name = "txtBase",
-                Location = new Point(controlX, yPos),
-                Width = controlWidth,
-                Font = new Font("Segoe UI", 11F),
-                ReadOnly = true,
-                MaxLength = 50,
-                CharacterCasing = CharacterCasing.Upper,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
-            };
-            yPos += 45;
+            // ===== SECCION: DATOS DEL PRODUCTO =====
+            Panel secProducto = CrearSeccionTitulo("DATOS DEL PRODUCTO", padX, y, fullWidth);
+            body.Controls.Add(secProducto);
+            y += 34;
 
-            // Unidad
-            Label lblUnidadLabel = CrearLabel("Unidad:", 20, yPos);
+            Label lblClaveLabel = CrearFieldLabel("CLAVE DEL COLOR", padX, y);
+            txtClave = CrearTextBoxModerno(padX, y + 20, halfWidth, true);
+            body.Controls.Add(lblClaveLabel);
+            body.Controls.Add(txtClave);
+
+            Label lblBaseLabel = CrearFieldLabel("BASE", padX + halfWidth + gap, y);
+            txtBase = CrearTextBoxModerno(padX + halfWidth + gap, y + 20, halfWidth, true);
+            txtBase.MaxLength = 50;
+            body.Controls.Add(lblBaseLabel);
+            body.Controls.Add(txtBase);
+            y += 60;
+
+            Label lblDescLabel = CrearFieldLabel("DESCRIPCIÓN", padX, y);
+            txtDescripcion = CrearTextBoxModerno(padX, y + 20, fullWidth, true);
+            body.Controls.Add(lblDescLabel);
+            body.Controls.Add(txtDescripcion);
+            y += 60;
+
+            // ===== SECCION: INFORMACION DE VENTA =====
+            Panel secVenta = CrearSeccionTitulo("INFORMACIÓN DE VENTA", padX, y, fullWidth);
+            body.Controls.Add(secVenta);
+            y += 34;
+
+            Label lblUnidadLabel = CrearFieldLabel("UNIDAD", padX, y);
             cmbUnidad = new ComboBox
             {
-                Name = "cmbUnidad",
-                Location = new Point(controlX, yPos),
-                Width = controlWidth,
-                Font = new Font("Segoe UI", 11F),
-                Enabled = false,
+                Location = new Point(padX, y + 20),
+                Width = halfWidth,
+                Font = FuenteInput,
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+                FlatStyle = FlatStyle.Flat,
+                Enabled = false
             };
-            cmbUnidad.Items.AddRange(new object[] { "Litro", "Galón" });
-            yPos += 45;
+            // ✅ CORREGIDO: Usar los valores reales que vienen de la base de datos
+            cmbUnidad.Items.AddRange(new object[] { "LT", "GL", "KG", "PZ", "M2", "M3", "Litro", "Galón", "Cubeta" });
+            body.Controls.Add(lblUnidadLabel);
+            body.Controls.Add(cmbUnidad);
 
-            // Cantidad
-            Label lblCantidadLabel = CrearLabel("Cantidad:", 20, yPos);
+            Label lblCantidadLabel = CrearFieldLabel("CANTIDAD", padX + halfWidth + gap, y);
             numCantidad = new NumericUpDown
             {
-                Name = "numCantidad",
-                Location = new Point(controlX, yPos),
-                Width = 200,
-                Font = new Font("Segoe UI", 11F),
+                Location = new Point(padX + halfWidth + gap, y + 20),
+                Width = halfWidth,
+                Font = FuenteInput,
                 DecimalPlaces = 2,
                 Minimum = 0.01m,
                 Maximum = 9999.99m,
-                ReadOnly = true
+                ReadOnly = true,
+                BorderStyle = BorderStyle.FixedSingle
             };
-            yPos += 45;
+            body.Controls.Add(lblCantidadLabel);
+            body.Controls.Add(numCantidad);
+            y += 60;
 
-            // Precio
-            Label lblPrecioLabel = CrearLabel("Precio:", 20, yPos);
+            Label lblPrecioLabel = CrearFieldLabel("PRECIO", padX, y);
             numPrecio = new NumericUpDown
             {
-                Name = "numPrecio",
-                Location = new Point(controlX, yPos),
-                Width = 200,
-                Font = new Font("Segoe UI", 11F),
+                Location = new Point(padX, y + 20),
+                Width = halfWidth,
+                Font = FuenteInput,
                 DecimalPlaces = 2,
                 Minimum = 0.01m,
                 Maximum = 99999.99m,
-                ReadOnly = true
+                ReadOnly = true,
+                BorderStyle = BorderStyle.FixedSingle
             };
-            yPos += 45;
+            body.Controls.Add(lblPrecioLabel);
+            body.Controls.Add(numPrecio);
 
-            // Total (calculado)
-            Label lblTotalLabel = CrearLabel("Total:", 20, yPos);
+            Panel totalPanel = CrearTotalPanel(padX + halfWidth + gap, y + 2, halfWidth);
+            body.Controls.Add(totalPanel);
+            y += 70;
+
+            // ===== SECCION: FORMULA DE COLOR =====
+            Panel secFormula = CrearSeccionTitulo("FÓRMULA DE COLOR", padX, y, fullWidth);
+            body.Controls.Add(secFormula);
+            y += 34;
+
+            panelFormulas = CrearPanelFormulas(padX, y, fullWidth, true);
+            body.Controls.Add(panelFormulas);
+            y += panelFormulas.Height + 20;
+
+            // ===== BOTONES =====
+            int btnX = padX;
+
+            btnEditar = CrearBoton("✏️  Editar", AzulEditar, btnX, y);
+            btnEditar.Visible = permitirEdicion;
+            btnX += 170;
+
+            btnEliminar = CrearBoton("🗑️  Eliminar", RojoEliminar, btnX, y);
+            btnEliminar.Visible = permitirEdicion;
+            btnX += 170;
+
+            btnGuardar = CrearBoton("💾  Guardar", VerdePrimario, padX, y);
+            btnGuardar.Visible = false;
+
+            btnCancelarEdicion = CrearBoton("✕  Cancelar", GrisBotonSecundario, padX + 170, y);
+            btnCancelarEdicion.ForeColor = TextoLabel;
+            btnCancelarEdicion.Visible = false;
+
+            Button btnCerrar = CrearBoton("Cerrar", GrisBotonSecundario, btnX, y);
+            btnCerrar.ForeColor = TextoLabel;
+
+            body.Controls.Add(btnEditar);
+            body.Controls.Add(btnEliminar);
+            body.Controls.Add(btnGuardar);
+            body.Controls.Add(btnCancelarEdicion);
+            body.Controls.Add(btnCerrar);
+            y += 60;
+
+            body.Height = y;
+
+            scrollPanel.Controls.Add(body);
+
+            // Header PRIMERO (Dock.Top), luego scroll
+            this.Controls.Add(scrollPanel);
+            this.Controls.Add(headerPanel);
+
+            // ===== EVENTOS =====
+            EventHandler calcularTotal = (s, e) =>
+            {
+                decimal total = numCantidad.Value * numPrecio.Value;
+                lblTotalValor.Text = $"${total:N2}";
+                // ✅ CORREGIDO: Reposicionar el label después de cambiar el texto
+                lblTotalValor.Location = new Point(
+                    totalPanel.Width - lblTotalValor.PreferredWidth - 16,
+                    10
+                );
+            };
+            numCantidad.ValueChanged += calcularTotal;
+            numPrecio.ValueChanged += calcularTotal;
+
+            btnEditar.Click += (s, e) => ActivarModoEdicion();
+            btnCancelarEdicion.Click += (s, e) => DesactivarModoEdicion();
+            btnGuardar.Click += (s, e) => GuardarCambios();
+            btnEliminar.Click += (s, e) => EliminarMovimiento();
+            btnCerrar.Click += (s, e) => this.Close();
+        }
+
+        // ===== HELPERS =====
+
+        private Panel CrearInfoCard(string label, string value, int x, int y, int width, int height)
+        {
+            Panel card = new Panel
+            {
+                Location = new Point(x, y),
+                Size = new Size(width, height),
+                BackColor = FondoTarjeta
+            };
+
+            card.Paint += (s, e) =>
+            {
+                using (Pen pen = new Pen(BordeTarjeta, 1))
+                {
+                    Rectangle rect = new Rectangle(0, 0, card.Width - 1, card.Height - 1);
+                    using (GraphicsPath path = CrearRectanguloRedondeado(rect, 10))
+                    {
+                        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                        e.Graphics.DrawPath(pen, path);
+                    }
+                }
+            };
+
+            Label lblLabel = new Label
+            {
+                Text = label,
+                Font = FuenteInfoLabel,
+                ForeColor = TextoSecundario,
+                Location = new Point(14, 10),
+                AutoSize = true
+            };
+
+            Label lblValue = new Label
+            {
+                Text = value,
+                Font = FuenteInfoValor,
+                ForeColor = AzulOscuro,
+                Location = new Point(14, 32),
+                Size = new Size(width - 28, height - 36),
+                AutoEllipsis = true
+            };
+
+            card.Controls.Add(lblLabel);
+            card.Controls.Add(lblValue);
+
+            return card;
+        }
+
+        private Panel CrearSeccionTitulo(string texto, int x, int y, int width)
+        {
+            Panel seccion = new Panel
+            {
+                Location = new Point(x, y),
+                Size = new Size(width, 28),
+                BackColor = Color.Transparent
+            };
+
+            seccion.Paint += (s, e) =>
+            {
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
+                using (Brush brush = new SolidBrush(AzulPrimario))
+                    e.Graphics.FillRectangle(brush, 0, 4, 4, 16);
+
+                using (Brush brush = new SolidBrush(AzulPrimario))
+                    e.Graphics.DrawString(texto, FuenteSeccion, brush, 12, 2);
+
+                using (Pen pen = new Pen(Color.FromArgb(232, 244, 253), 2))
+                    e.Graphics.DrawLine(pen, 0, seccion.Height - 1, seccion.Width, seccion.Height - 1);
+            };
+
+            return seccion;
+        }
+
+        private Label CrearFieldLabel(string texto, int x, int y)
+        {
+            return new Label
+            {
+                Text = texto,
+                Font = FuenteFieldLabel,
+                ForeColor = TextoLabel,
+                Location = new Point(x, y),
+                AutoSize = true
+            };
+        }
+
+        private TextBox CrearTextBoxModerno(int x, int y, int width, bool readOnly = false)
+        {
+            return new TextBox
+            {
+                Location = new Point(x, y),
+                Width = width,
+                Font = FuenteInput,
+                CharacterCasing = CharacterCasing.Upper,
+                BorderStyle = BorderStyle.FixedSingle,
+                ReadOnly = readOnly
+            };
+        }
+
+        private Panel CrearTotalPanel(int x, int y, int width)
+        {
+            Panel panel = new Panel
+            {
+                Location = new Point(x, y),
+                Size = new Size(width, 55),
+                BackColor = FondoVerde
+            };
+
+            panel.Paint += (s, e) =>
+            {
+                using (Pen pen = new Pen(BordeVerde, 2))
+                {
+                    Rectangle rect = new Rectangle(0, 0, panel.Width - 1, panel.Height - 1);
+                    using (GraphicsPath path = CrearRectanguloRedondeado(rect, 10))
+                    {
+                        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                        e.Graphics.DrawPath(pen, path);
+                    }
+                }
+            };
+
+            Label lblTotal = new Label
+            {
+                Text = "TOTAL",
+                Font = FuenteTotalLabel,
+                ForeColor = VerdePrimario,
+                Location = new Point(16, 17),
+                AutoSize = true
+            };
+
+            // ✅ CORREGIDO: Configurar el label del total correctamente
             lblTotalValor = new Label
             {
-                Name = "lblTotalValor",
-                Location = new Point(controlX, yPos),
+                Text = "$0.00",
+                Font = FuenteTotalValor,
+                ForeColor = VerdeOscuro,
                 AutoSize = true,
-                Font = new Font("Segoe UI", 14F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(0, 128, 0)
+                TextAlign = ContentAlignment.MiddleRight
             };
-            yPos += 50;
 
-            // === SECCIÓN DE FÓRMULA ===
-            Label lblFormulaLabel = new Label
-            {
-                Text = "Fórmula:",
-                Location = new Point(20, yPos),
-                AutoSize = true,
-                Font = new Font("Segoe UI", 11F, FontStyle.Bold)
-            };
-            yPos += 35;
+            // Posicionar después de establecer el texto inicial
+            lblTotalValor.Location = new Point(width - lblTotalValor.PreferredWidth - 16, 10);
 
-            // TableLayoutPanel para las fórmulas (2 columnas, 3 filas)
-            TableLayoutPanel panelFormulas = new TableLayoutPanel
+            panel.Controls.Add(lblTotal);
+            panel.Controls.Add(lblTotalValor);
+
+            return panel;
+        }
+
+        private TableLayoutPanel CrearPanelFormulas(int x, int y, int width, bool readOnly)
+        {
+            TableLayoutPanel panel = new TableLayoutPanel
             {
                 Name = "panelFormulas",
-                Location = new Point(20, yPos),
-                Width = infoPanel.MinimumSize.Width - 60,
-                Height = 120,
-                BackColor = Color.White,
-                BorderStyle = BorderStyle.FixedSingle,
+                Location = new Point(x, y),
+                Width = width,
+                Height = 130,
+                BackColor = FondoFormula,
                 ColumnCount = 2,
                 RowCount = 3,
                 CellBorderStyle = TableLayoutPanelCellBorderStyle.None,
-                Padding = new Padding(10, 5, 10, 5),
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+                Padding = new Padding(12, 8, 12, 8)
             };
 
-            // Configurar columnas (50% cada una)
-            panelFormulas.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            panelFormulas.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-
-            // Configurar filas (automáticas)
-            for (int i = 0; i < 3; i++)
+            panel.Paint += (s, e) =>
             {
-                panelFormulas.RowStyles.Add(new RowStyle(SizeType.Percent, 33.33F));
-            }
+                using (Pen pen = new Pen(BordeTarjeta, 1))
+                {
+                    Rectangle rect = new Rectangle(0, 0, panel.Width - 1, panel.Height - 1);
+                    using (GraphicsPath path = CrearRectanguloRedondeado(rect, 10))
+                    {
+                        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                        e.Graphics.DrawPath(pen, path);
+                    }
+                }
+            };
 
-            // Crear 6 filas para la fórmula (3 por columna)
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            for (int i = 0; i < 3; i++)
+                panel.RowStyles.Add(new RowStyle(SizeType.Percent, 33.33F));
+
             for (int i = 0; i < 6; i++)
             {
-                int col = i / 3;  // 0 para i=0,1,2 y 1 para i=3,4,5
+                int col = i / 3;
                 int row = i % 3;
 
-                // Panel con TableLayoutPanel para centrar horizontalmente
                 Panel filaPanel = new Panel
                 {
-                    Name = $"filaPanel{i}",
                     Dock = DockStyle.Fill,
                     Margin = new Padding(2),
-                    BackColor = Color.White
+                    BackColor = FondoFormula
                 };
 
-                // FlowLayoutPanel para centrar el contenido
                 FlowLayoutPanel flowPanel = new FlowLayoutPanel
                 {
                     FlowDirection = FlowDirection.LeftToRight,
                     AutoSize = true,
                     WrapContents = false,
-                    Anchor = AnchorStyles.None  // Esto centra el FlowLayoutPanel
+                    Anchor = AnchorStyles.None
                 };
 
-                // TextBox para el tipo (B, O, T, KX, etc.) - CAMBIADO DE ComboBox
                 TextBox txtTipo = new TextBox
                 {
                     Name = $"txtTipo{i}",
-                    Width = 50,
-                    Font = new Font("Segoe UI", 9.5F),
-                    ReadOnly = true,
+                    Width = 56,
+                    Font = FuenteFormula,
                     TextAlign = HorizontalAlignment.Center,
                     CharacterCasing = CharacterCasing.Upper,
+                    BorderStyle = BorderStyle.FixedSingle,
+                    ReadOnly = readOnly,
                     Margin = new Padding(0)
                 };
                 txtTipos[i] = txtTipo;
@@ -318,39 +532,39 @@ namespace PaintControl.Forms
                 Label lblIgual = new Label
                 {
                     Text = "=",
-                    Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                    Font = FuenteIgual,
+                    ForeColor = Color.FromArgb(160, 174, 192),
                     AutoSize = true,
                     TextAlign = ContentAlignment.MiddleCenter,
                     Margin = new Padding(5, 0, 5, 0)
                 };
 
-                // Primer número
                 TextBox txtValor1 = new TextBox
                 {
                     Name = $"txtValor1_{i}",
-                    Width = 50,
-                    Font = new Font("Segoe UI", 9.5F),
-                    ReadOnly = true,
+                    Width = 56,
+                    Font = FuenteFormula,
                     TextAlign = HorizontalAlignment.Center,
+                    BorderStyle = BorderStyle.FixedSingle,
+                    ReadOnly = readOnly,
                     Margin = new Padding(0, 0, 5, 0)
                 };
                 txtValores1[i] = txtValor1;
 
-                // Segundo número (opcional)
                 TextBox txtValor2 = new TextBox
                 {
                     Name = $"txtValor2_{i}",
-                    Width = 50,
-                    Font = new Font("Segoe UI", 9.5F),
-                    ReadOnly = true,
+                    Width = 56,
+                    Font = FuenteFormula,
                     TextAlign = HorizontalAlignment.Center,
+                    BorderStyle = BorderStyle.FixedSingle,
+                    ReadOnly = readOnly,
                     Margin = new Padding(0)
                 };
                 txtValores2[i] = txtValor2;
 
                 flowPanel.Controls.AddRange(new Control[] { txtTipo, lblIgual, txtValor1, txtValor2 });
 
-                // Centrar el FlowLayoutPanel en el filaPanel
                 flowPanel.Location = new Point(
                     (filaPanel.Width - flowPanel.Width) / 2,
                     (filaPanel.Height - flowPanel.Height) / 2
@@ -358,7 +572,6 @@ namespace PaintControl.Forms
 
                 filaPanel.Controls.Add(flowPanel);
 
-                // Ajustar posición cuando el panel cambie de tamaño
                 filaPanel.Resize += (s, e) =>
                 {
                     if (flowPanel.Parent != null)
@@ -370,173 +583,83 @@ namespace PaintControl.Forms
                     }
                 };
 
-                panelFormulas.Controls.Add(filaPanel, col, row);
+                panel.Controls.Add(filaPanel, col, row);
             }
 
-            // Agregar controles al panel de información
-            infoPanel.Controls.AddRange(new Control[]
-            {
-                lblFechaLabel, dtpFecha,
-                lblClaveLabel, txtClave,
-                lblDescLabel, txtDescripcion,
-                lblBaseLabel, txtBase,
-                lblUnidadLabel, cmbUnidad,
-                lblCantidadLabel, numCantidad,
-                lblPrecioLabel, numPrecio,
-                lblTotalLabel, lblTotalValor,
-                lblFormulaLabel, panelFormulas
-            });
-
-            scrollablePanel.Controls.Add(infoPanel);
-
-            // Panel de botones con FlowLayoutPanel para diseño responsivo
-            FlowLayoutPanel buttonPanel = new FlowLayoutPanel
-            {
-                Name = "buttonPanel",
-                Dock = DockStyle.Fill,
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = true,
-                AutoSize = true,
-                Padding = new Padding(0, 10, 0, 10),
-                Margin = new Padding(0)
-            };
-
-            Button btnEditar = new Button
-            {
-                Name = "btnEditar",
-                Text = "✏️ Editar",
-                Size = new Size(130, 45),
-                BackColor = Color.FromArgb(74, 143, 208),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 11F, FontStyle.Bold),
-                Cursor = Cursors.Hand,
-                Visible = permitirEdicion,
-                Margin = new Padding(0, 0, 10, 0)
-            };
-            btnEditar.FlatAppearance.BorderSize = 0;
-
-            Button btnEliminar = new Button
-            {
-                Name = "btnEliminar",
-                Text = "🗑️ Eliminar",
-                Size = new Size(130, 45),
-                BackColor = Color.FromArgb(220, 53, 69),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 11F, FontStyle.Bold),
-                Cursor = Cursors.Hand,
-                Visible = permitirEdicion,
-                Margin = new Padding(0, 0, 10, 0)
-            };
-            btnEliminar.FlatAppearance.BorderSize = 0;
-
-            Button btnGuardar = new Button
-            {
-                Name = "btnGuardar",
-                Text = "💾 Guardar",
-                Size = new Size(130, 45),
-                BackColor = Color.FromArgb(40, 167, 69),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 11F, FontStyle.Bold),
-                Cursor = Cursors.Hand,
-                Visible = false,
-                Margin = new Padding(0, 0, 10, 0)
-            };
-            btnGuardar.FlatAppearance.BorderSize = 0;
-
-            Button btnCancelarEdicion = new Button
-            {
-                Name = "btnCancelarEdicion",
-                Text = "✗ Cancelar",
-                Size = new Size(130, 45),
-                BackColor = Color.Gray,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 11F, FontStyle.Bold),
-                Cursor = Cursors.Hand,
-                Visible = false,
-                Margin = new Padding(0, 0, 10, 0)
-            };
-            btnCancelarEdicion.FlatAppearance.BorderSize = 0;
-
-            Button btnCerrar = new Button
-            {
-                Name = "btnCerrar",
-                Text = "Cerrar",
-                Size = new Size(130, 45),
-                BackColor = Color.Gray,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 11F, FontStyle.Bold),
-                Cursor = Cursors.Hand,
-                Margin = new Padding(0, 0, 0, 0)
-            };
-            btnCerrar.FlatAppearance.BorderSize = 0;
-
-            // Eventos
-            EventHandler calcularTotal = (s, e) =>
-            {
-                decimal total = numCantidad.Value * numPrecio.Value;
-                lblTotalValor.Text = $"${total:N2}";
-            };
-            numCantidad.ValueChanged += calcularTotal;
-            numPrecio.ValueChanged += calcularTotal;
-
-            btnEditar.Click += (s, e) => ActivarModoEdicion(
-                dtpFecha, txtClave, txtDescripcion, txtBase, cmbUnidad,
-                numCantidad, numPrecio, panelFormulas,
-                btnEditar, btnEliminar, btnGuardar, btnCancelarEdicion);
-
-            btnCancelarEdicion.Click += (s, e) => DesactivarModoEdicion(
-                dtpFecha, txtClave, txtDescripcion, txtBase, cmbUnidad,
-                numCantidad, numPrecio, panelFormulas,
-                btnEditar, btnEliminar, btnGuardar, btnCancelarEdicion);
-
-            btnGuardar.Click += (s, e) => GuardarCambios(
-                dtpFecha, txtClave, txtDescripcion, txtBase, cmbUnidad,
-                numCantidad, numPrecio, panelFormulas);
-
-            btnEliminar.Click += (s, e) => EliminarMovimiento();
-
-            btnCerrar.Click += (s, e) => this.Close();
-
-            // Agregar botones al panel
-            buttonPanel.Controls.AddRange(new Control[]
-            {
-                btnEditar, btnEliminar, btnGuardar, btnCancelarEdicion, btnCerrar
-            });
-
-            // Agregar todo al layout principal
-            mainLayout.Controls.Add(lblTitulo, 0, 0);
-            mainLayout.Controls.Add(scrollablePanel, 0, 1);
-            mainLayout.Controls.Add(buttonPanel, 0, 2);
-
-            this.Controls.Add(mainLayout);
+            return panel;
         }
 
-        private Label CrearLabel(string texto, int xPos, int yPos)
+        private Button CrearBoton(string texto, Color backColor, int x, int y)
         {
-            return new Label
+            Button btn = new Button
             {
                 Text = texto,
-                Location = new Point(xPos, yPos + 3),
-                AutoSize = true,
-                Font = new Font("Segoe UI", 10F, FontStyle.Bold)
+                Size = new Size(155, 44),
+                Location = new Point(x, y),
+                BackColor = backColor,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = FuenteBoton,
+                Cursor = Cursors.Hand
             };
+            btn.FlatAppearance.BorderSize = 0;
+            return btn;
         }
+
+        private GraphicsPath CrearRectanguloRedondeado(Rectangle rect, int radius)
+        {
+            GraphicsPath path = new GraphicsPath();
+            path.AddArc(rect.X, rect.Y, radius, radius, 180, 90);
+            path.AddArc(rect.Right - radius, rect.Y, radius, radius, 270, 90);
+            path.AddArc(rect.Right - radius, rect.Bottom - radius, radius, radius, 0, 90);
+            path.AddArc(rect.X, rect.Bottom - radius, radius, radius, 90, 90);
+            path.CloseFigure();
+            return path;
+        }
+
+        // ===== CARGA DE DATOS =====
 
         private void CargarDatos()
         {
             dtpFecha.Value = movimiento.Fecha;
-            txtClave.Text = movimiento.ClaveColor;
-            txtDescripcion.Text = movimiento.Descripcion;
-            txtBase.Text = movimiento.Base;
-            cmbUnidad.SelectedItem = movimiento.Unidad;
+            txtClave.Text = movimiento.ClaveColor ?? "";
+            txtDescripcion.Text = movimiento.Descripcion ?? "";
+            txtBase.Text = movimiento.Base ?? "";
+
+            // ✅ CORREGIDO: Cargar la unidad correctamente
+            if (!string.IsNullOrWhiteSpace(movimiento.Unidad))
+            {
+                // Buscar el índice del item que coincide
+                int index = cmbUnidad.FindStringExact(movimiento.Unidad);
+                if (index >= 0)
+                {
+                    cmbUnidad.SelectedIndex = index;
+                }
+                else
+                {
+                    // Si no lo encuentra, agregarlo y seleccionarlo
+                    cmbUnidad.Items.Add(movimiento.Unidad);
+                    cmbUnidad.SelectedItem = movimiento.Unidad;
+                }
+            }
+            else
+            {
+                // Si está vacío, seleccionar el primero por defecto
+                if (cmbUnidad.Items.Count > 0)
+                {
+                    cmbUnidad.SelectedIndex = 0;
+                }
+            }
+
             numCantidad.Value = movimiento.Cantidad;
             numPrecio.Value = movimiento.Precio;
+
+            // ✅ CORREGIDO: Actualizar el total y reposicionar el label
             lblTotalValor.Text = $"${movimiento.Total:N2}";
+            lblTotalValor.Location = new Point(
+                lblTotalValor.Parent.Width - lblTotalValor.PreferredWidth - 16,
+                10
+            );
 
             CargarFormula(movimiento.Formula);
         }
@@ -564,9 +687,9 @@ namespace PaintControl.Forms
             }
         }
 
-        private string ObtenerFormula(TableLayoutPanel panelFormulas)
+        private string ObtenerFormula()
         {
-            var formulas = new System.Collections.Generic.List<string>();
+            var formulas = new List<string>();
 
             for (int i = 0; i < 6; i++)
             {
@@ -583,10 +706,9 @@ namespace PaintControl.Forms
             return string.Join("|", formulas);
         }
 
-        private void ActivarModoEdicion(DateTimePicker dtpFecha, TextBox txtClave,
-            TextBox txtDescripcion, TextBox txtBase, ComboBox cmbUnidad,
-            NumericUpDown numCantidad, NumericUpDown numPrecio, TableLayoutPanel panelFormulas,
-            Button btnEditar, Button btnEliminar, Button btnGuardar, Button btnCancelarEdicion)
+        // ===== MODO EDICION =====
+
+        private void ActivarModoEdicion()
         {
             modoEdicion = true;
 
@@ -598,7 +720,6 @@ namespace PaintControl.Forms
             numCantidad.ReadOnly = false;
             numPrecio.ReadOnly = false;
 
-            // Habilitar campos de fórmula
             for (int i = 0; i < 6; i++)
             {
                 if (txtTipos[i] != null) txtTipos[i].ReadOnly = false;
@@ -612,10 +733,7 @@ namespace PaintControl.Forms
             btnCancelarEdicion.Visible = true;
         }
 
-        private void DesactivarModoEdicion(DateTimePicker dtpFecha, TextBox txtClave,
-            TextBox txtDescripcion, TextBox txtBase, ComboBox cmbUnidad,
-            NumericUpDown numCantidad, NumericUpDown numPrecio, TableLayoutPanel panelFormulas,
-            Button btnEditar, Button btnEliminar, Button btnGuardar, Button btnCancelarEdicion)
+        private void DesactivarModoEdicion()
         {
             modoEdicion = false;
             CargarDatos();
@@ -628,7 +746,6 @@ namespace PaintControl.Forms
             numCantidad.ReadOnly = true;
             numPrecio.ReadOnly = true;
 
-            // Deshabilitar campos de fórmula
             for (int i = 0; i < 6; i++)
             {
                 if (txtTipos[i] != null) txtTipos[i].ReadOnly = true;
@@ -642,9 +759,7 @@ namespace PaintControl.Forms
             btnCancelarEdicion.Visible = false;
         }
 
-        private void GuardarCambios(DateTimePicker dtpFecha, TextBox txtClave,
-            TextBox txtDescripcion, TextBox txtBase, ComboBox cmbUnidad,
-            NumericUpDown numCantidad, NumericUpDown numPrecio, TableLayoutPanel panelFormulas)
+        private void GuardarCambios()
         {
             if (string.IsNullOrWhiteSpace(txtClave.Text) || string.IsNullOrWhiteSpace(txtDescripcion.Text))
             {
@@ -665,7 +780,7 @@ namespace PaintControl.Forms
                 Unidad = cmbUnidad.SelectedItem?.ToString() ?? movimiento.Unidad,
                 Cantidad = numCantidad.Value,
                 Precio = numPrecio.Value,
-                Formula = ObtenerFormula(panelFormulas)
+                Formula = ObtenerFormula()
             };
 
             Modificado = true;

@@ -85,7 +85,7 @@ namespace PaintControl.Data
             using (var context = new DOALDbContext())
             {
                 return context.Movimientos
-                    .AsNoTracking()
+                    .Include(m => m.Cliente)
                     .FirstOrDefault(m => m.NumeroMovimiento == numeroMovimiento);
             }
         }
