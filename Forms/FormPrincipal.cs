@@ -52,6 +52,14 @@ namespace PaintControl
                 catch { }
             });
 
+            // Alinear logo
+            picLogo.Top = (headerPanel.Height - picLogo.Height) / 2;
+
+            // Colocar texto a la derecha del logo
+            lblTituloTexto.Left = picLogo.Right + 12;
+            lblTituloTexto.Top = (headerPanel.Height - lblTituloTexto.Height) / 2;
+
+
             // Configurar el reloj
             ConfigurarReloj();
 
@@ -349,7 +357,7 @@ namespace PaintControl
                 Text = "Seleccionar",
                 Location = new Point(460, 310),
                 Size = new Size(100, 35),
-                BackColor = Color.FromArgb(74, 143, 208),
+                BackColor = Color.FromArgb(47, 164, 231),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat
             };
@@ -400,7 +408,9 @@ namespace PaintControl
         {
             clienteActual = cliente;
             emptyStatePanel.Visible = false;
-            searchPanel.BackColor = Color.FromArgb(124, 184, 111);
+            searchPanel.BackColor = Color.FromArgb(164, 231, 47);
+            //searchPanel.BackColor = Color.FromArgb(128, 196, 83);
+
             MostrarMovimientos();
         }
 
@@ -509,13 +519,19 @@ namespace PaintControl
                 Text = "➕ Agregar Compra",
                 Location = new Point(anchoDisponible - 220, 10),
                 Size = new Size(200, 38),
-                BackColor = Color.FromArgb(74, 143, 208),
+                //BackColor = Color.FromArgb(47, 164, 231),
+                BackColor = Color.FromArgb(231, 47, 164),
+
                 ForeColor = Color.White,
                 Font = new Font("Segoe UI", 10F, FontStyle.Bold),
                 CornerRadius = 10,
                 Anchor = ((AnchorStyles)((AnchorStyles.Top | AnchorStyles.Right)))
             };
             btnAgregarMovimiento.Click += BtnAgregarMovimiento_Click;
+
+             
+            // G R I D   D E  M O V I M I E N T O S
+
 
             dgvMovimientos = new DataGridView
             {
@@ -537,7 +553,7 @@ namespace PaintControl
                 ColumnHeadersHeight = 40,
                 ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
                 {
-                    BackColor = Color.FromArgb(74, 143, 208),
+                    BackColor = Color.FromArgb(47,164,231),
                     ForeColor = Color.White,
                     Font = new Font("Segoe UI", 11F, FontStyle.Bold),
                     Alignment = DataGridViewContentAlignment.MiddleCenter
@@ -546,16 +562,16 @@ namespace PaintControl
                 {
                     BackColor = Color.White,
                     ForeColor = Color.Black,
-                    SelectionBackColor = Color.FromArgb(155, 185, 210),
-                    SelectionForeColor = Color.White,
+                    SelectionBackColor = Color.FromArgb(214,235,255),
+                    SelectionForeColor = Color.Black,
                     Font = new Font("Segoe UI", 9.5F),
                     Padding = new Padding(5),
                     Alignment = DataGridViewContentAlignment.MiddleCenter
                 },
-                AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle
-                {
-                    BackColor = Color.FromArgb(245, 248, 250)
-                },
+                //AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle
+                //{
+                //    BackColor = Color.FromArgb(245, 248, 250)
+                //},
                 EnableHeadersVisualStyles = false,
                 GridColor = Color.LightGray,
             };
@@ -576,7 +592,7 @@ namespace PaintControl
                 if (e.RowIndex == -1 && e.ColumnIndex >= 0)
                 {
                     e.PaintBackground(e.CellBounds, true);
-                    using (Brush brush = new SolidBrush(Color.FromArgb(74, 143, 208)))
+                    using (Brush brush = new SolidBrush(Color.FromArgb(47, 164, 231)))
                     {
                         e.Graphics.FillRectangle(brush, e.CellBounds);
                     }
@@ -743,7 +759,7 @@ namespace PaintControl
                 panelMovimientos.Visible = false;
             }
 
-            searchPanel.BackColor = Color.FromArgb(168, 200, 225);
+            searchPanel.BackColor = Color.FromArgb(191, 227, 248);
             txtCriterio.Focus();
         }
 
@@ -776,6 +792,7 @@ namespace PaintControl
                 Text = "Lista de Clientes",
                 Size = new Size(900, 600),
                 StartPosition = FormStartPosition.CenterParent
+
             };
 
             Panel topPanel = new Panel
@@ -826,7 +843,9 @@ namespace PaintControl
                 ColumnHeadersHeight = 40,
                 ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
                 {
-                    BackColor = Color.FromArgb(74, 143, 208),
+                    //BackColor = Color.FromArgb(74, 143, 208),
+                    BackColor = Color.FromArgb(47, 164, 231),
+
                     ForeColor = Color.White,
                     Font = new Font("Segoe UI", 13F, FontStyle.Bold),
                     Alignment = DataGridViewContentAlignment.MiddleCenter
@@ -835,16 +854,18 @@ namespace PaintControl
                 {
                     BackColor = Color.White,
                     ForeColor = Color.Black,
-                    SelectionBackColor = Color.FromArgb(155, 185, 210),
-                    SelectionForeColor = Color.White,
+                    //SelectionBackColor = Color.FromArgb(155, 185, 210),
+                    SelectionBackColor = Color.FromArgb(214, 235, 255),
+                    SelectionForeColor = Color.Black,
+                    //SelectionForeColor = Color.FromArgb(46, 92, 138),
                     Font = new Font("Segoe UI", 12F),
                     Padding = new Padding(5),
                     Alignment = DataGridViewContentAlignment.MiddleCenter
                 },
-                AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle
-                {
-                    BackColor = Color.FromArgb(245, 248, 250)
-                },
+                //AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle
+                //{
+                //    BackColor = Color.FromArgb(245, 248, 250)
+                //},
                 EnableHeadersVisualStyles = false,
                 BorderStyle = BorderStyle.Fixed3D,
                 GridColor = Color.LightGray,
@@ -859,7 +880,7 @@ namespace PaintControl
                 if (e.RowIndex == -1 && e.ColumnIndex >= 0)
                 {
                     e.PaintBackground(e.CellBounds, true);
-                    using (Brush brush = new SolidBrush(Color.FromArgb(74, 143, 208)))
+                    using (Brush brush = new SolidBrush(Color.FromArgb(47, 164, 231)))
                     {
                         e.Graphics.FillRectangle(brush, e.CellBounds);
                     }
@@ -941,6 +962,7 @@ namespace PaintControl
                 }
             };
 
+            listaForm.BackColor = Color.FromArgb(244, 247, 251);
             listaForm.Controls.Add(dgv);
             listaForm.Controls.Add(topPanel);
             listaForm.ShowDialog(this);

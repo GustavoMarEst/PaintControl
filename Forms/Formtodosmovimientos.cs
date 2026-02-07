@@ -44,7 +44,7 @@ namespace PaintControl.Forms
             {
                 Dock = DockStyle.Top,
                 Height = 80,
-                BackColor = Color.FromArgb(168, 200, 225),
+                BackColor = Color.FromArgb(191, 227, 248),
                 Padding = new Padding(15)
             };
 
@@ -145,7 +145,7 @@ namespace PaintControl.Forms
                 ColumnHeadersHeight = 40,
                 ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
                 {
-                    BackColor = Color.FromArgb(74, 143, 208),
+                    BackColor = Color.FromArgb(47, 164, 231),
                     ForeColor = Color.White,
                     Font = new Font("Segoe UI", 11F, FontStyle.Bold),
                     Alignment = DataGridViewContentAlignment.MiddleCenter
@@ -154,15 +154,15 @@ namespace PaintControl.Forms
                 {
                     BackColor = Color.White,
                     ForeColor = Color.Black,
-                    SelectionBackColor = Color.FromArgb(155, 185, 210),
-                    SelectionForeColor = Color.White,
+                    SelectionBackColor = Color.FromArgb(214, 235, 255),
+                    SelectionForeColor = Color.Black,
                     Padding = new Padding(5),
                     Alignment = DataGridViewContentAlignment.MiddleCenter
                 },
-                AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle
-                {
-                    BackColor = Color.FromArgb(245, 248, 250)
-                },
+                //AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle
+                //{
+                //    BackColor = Color.FromArgb(245, 248, 250)
+                //},
                 EnableHeadersVisualStyles = false,
                 BorderStyle = BorderStyle.None,
                 GridColor = Color.LightGray
@@ -181,7 +181,7 @@ namespace PaintControl.Forms
                 if (e.RowIndex == -1 && e.ColumnIndex >= 0)
                 {
                     e.PaintBackground(e.CellBounds, true);
-                    using (Brush brush = new SolidBrush(Color.FromArgb(74, 143, 208)))
+                    using (Brush brush = new SolidBrush(Color.FromArgb(47, 164, 231)))
                     {
                         e.Graphics.FillRectangle(brush, e.CellBounds);
                     }
