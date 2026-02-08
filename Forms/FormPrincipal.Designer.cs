@@ -38,7 +38,7 @@ namespace PaintControl
             this.btnArticulos = new PaintControl.RoundedButton();
             this.btnVerClientes = new PaintControl.RoundedButton();
             this.btnTodosMovimientos = new PaintControl.RoundedButton();
-            this.btnBases = new PaintControl.RoundedButton();
+
             this.lblHora = new PaintControl.RoundedLabel();
             this.headerPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.picLogo)).BeginInit();
@@ -149,7 +149,7 @@ namespace PaintControl
             this.bottomPanel.Controls.Add(this.btnArticulos);
             this.bottomPanel.Controls.Add(this.btnVerClientes);
             this.bottomPanel.Controls.Add(this.btnTodosMovimientos);
-            this.bottomPanel.Controls.Add(this.btnBases);
+
             this.bottomPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.bottomPanel.Location = new System.Drawing.Point(0, 620);
             this.bottomPanel.Name = "bottomPanel";
@@ -260,7 +260,7 @@ namespace PaintControl
             this.btnArticulos.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnArticulos.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.btnArticulos.ForeColor = System.Drawing.Color.White;
-            this.btnArticulos.Location = new System.Drawing.Point(455, 12);
+            this.btnArticulos.Location = new System.Drawing.Point(640, 12);
             this.btnArticulos.Name = "btnArticulos";
             this.btnArticulos.Size = new System.Drawing.Size(170, 46);
             this.btnArticulos.TabIndex = 1;
@@ -277,7 +277,7 @@ namespace PaintControl
             this.btnVerClientes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnVerClientes.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.btnVerClientes.ForeColor = System.Drawing.Color.White;
-            this.btnVerClientes.Location = new System.Drawing.Point(640, 12);
+            this.btnVerClientes.Location = new System.Drawing.Point(825, 12);
             this.btnVerClientes.Name = "btnVerClientes";
             this.btnVerClientes.Size = new System.Drawing.Size(170, 46);
             this.btnVerClientes.TabIndex = 2;
@@ -294,29 +294,13 @@ namespace PaintControl
             this.btnTodosMovimientos.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnTodosMovimientos.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.btnTodosMovimientos.ForeColor = System.Drawing.Color.White;
-            this.btnTodosMovimientos.Location = new System.Drawing.Point(820, 12);
+            this.btnTodosMovimientos.Location = new System.Drawing.Point(1010, 12);
             this.btnTodosMovimientos.Name = "btnTodosMovimientos";
             this.btnTodosMovimientos.Size = new System.Drawing.Size(180, 46);
             this.btnTodosMovimientos.TabIndex = 3;
             this.btnTodosMovimientos.Text = "📋 Movimientos (F8)";
             this.btnTodosMovimientos.UseVisualStyleBackColor = false;
-            // 
-            // btnBases
-            // 
-            this.btnBases.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnBases.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(152)))), ((int)(((byte)(0)))));
-            this.btnBases.CornerRadius = 15;
-            this.btnBases.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnBases.FlatAppearance.BorderSize = 0;
-            this.btnBases.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnBases.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
-            this.btnBases.ForeColor = System.Drawing.Color.White;
-            this.btnBases.Location = new System.Drawing.Point(1015, 12);
-            this.btnBases.Name = "btnBases";
-            this.btnBases.Size = new System.Drawing.Size(165, 46);
-            this.btnBases.TabIndex = 4;
-            this.btnBases.Text = "🎨 Bases (F11)";
-            this.btnBases.UseVisualStyleBackColor = false;
+
             // 
             // lblHora
             // 
@@ -380,7 +364,7 @@ namespace PaintControl
         private RoundedButton btnVerClientes;
         private RoundedButton btnArticulos;
         private RoundedButton btnTodosMovimientos;
-        private RoundedButton btnBases;
+
         private System.Windows.Forms.PictureBox picLogo;
         private System.Windows.Forms.Label lblTituloTexto;
 

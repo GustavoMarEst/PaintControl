@@ -74,6 +74,18 @@ namespace PaintControl.Forms
             ConfigurarFormulario();
         }
 
+        // Deshabilitar scroll en ComboBoxes
+        private void DeshabilitarScrollCombo(ComboBox cmb)
+        {
+            cmb.MouseWheel += (s, e) => ((HandledMouseEventArgs)e).Handled = true;
+        }
+
+        // Deshabilitar scroll en NumericUpDown
+        private void DeshabilitarScrollNumeric(NumericUpDown num)
+        {
+            num.MouseWheel += (s, e) => ((HandledMouseEventArgs)e).Handled = true;
+        }
+
         private void ConfigurarFormulario()
         {
             this.Text = $"Agregar Movimiento - {cliente.Nombre}";
@@ -193,6 +205,7 @@ namespace PaintControl.Forms
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 FlatStyle = FlatStyle.Flat
             };
+            DeshabilitarScrollCombo(cmbTipoPintura);
             body.Controls.Add(cmbTipoPintura);
 
             body.Controls.Add(CrearFieldLabel("L\u00cdNEA", padX + cmbWidth + gap, y));
@@ -205,6 +218,7 @@ namespace PaintControl.Forms
                 FlatStyle = FlatStyle.Flat,
                 Enabled = false
             };
+            DeshabilitarScrollCombo(cmbLineaPintura);
             body.Controls.Add(cmbLineaPintura);
 
             body.Controls.Add(CrearFieldLabel("ACABADO", padX + (cmbWidth + gap) * 2, y));
@@ -217,6 +231,7 @@ namespace PaintControl.Forms
                 FlatStyle = FlatStyle.Flat,
                 Enabled = false
             };
+            DeshabilitarScrollCombo(cmbAcabado);
             body.Controls.Add(cmbAcabado);
             y += 50;
 
@@ -257,6 +272,7 @@ namespace PaintControl.Forms
             };
             cmbUnidad.Items.AddRange(new object[] { "Litro", "Gal\u00f3n", "Cubeta" });
             cmbUnidad.SelectedIndex = 0;
+            DeshabilitarScrollCombo(cmbUnidad);
             body.Controls.Add(cmbUnidad);
 
             body.Controls.Add(CrearFieldLabel("CANTIDAD", padX + halfWidth + gap, y));
@@ -265,12 +281,13 @@ namespace PaintControl.Forms
                 Location = new Point(padX + halfWidth + gap, y + 18),
                 Width = halfWidth,
                 Font = FuenteInput,
-                DecimalPlaces = 2,
-                Minimum = 0.01m,
-                Maximum = 9999.99m,
+                DecimalPlaces = 0,
+                Minimum = 1,
+                Maximum = 9999,
                 Value = 1,
                 BorderStyle = BorderStyle.FixedSingle
             };
+            DeshabilitarScrollNumeric(numCantidad);
             body.Controls.Add(numCantidad);
             y += 52;
 
@@ -286,6 +303,7 @@ namespace PaintControl.Forms
                 Value = 100,
                 BorderStyle = BorderStyle.FixedSingle
             };
+            DeshabilitarScrollNumeric(numPrecio);
             body.Controls.Add(numPrecio);
 
             Panel totalPanel = CrearTotalPanel(padX + halfWidth + gap, y + 2, halfWidth);

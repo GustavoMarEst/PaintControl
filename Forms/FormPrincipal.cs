@@ -133,7 +133,7 @@ namespace PaintControl
             btnVerClientes.Click += BtnVerClientes_Click;
             btnTodosMovimientos.Click += BtnTodosMovimientos_Click;
             btnArticulos.Click += BtnArticulos_Click;
-            btnBases.Click += BtnBases_Click;
+
 
             // Atajos de teclado
             this.KeyPreview = true;
@@ -182,10 +182,7 @@ namespace PaintControl
                 case Keys.F10:
                     BtnArticulos_Click(null, null);
                     break;
-                case Keys.F11:
-                    MessageBox.Show("Módulo de Bases en desarrollo...",
-                        "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    break;
+
                 case Keys.Escape:
                     LimpiarFormulario();
                     break;
@@ -755,11 +752,7 @@ namespace PaintControl
             formCatalogo.ShowDialog(this);
         }
 
-        private void BtnBases_Click(object sender, EventArgs e)
-        {
-            MessageBox.Show("Módulo de Bases en desarrollo...",
-                "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
+
 
         private void MostrarListaClientes()
         {

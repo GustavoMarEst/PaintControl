@@ -86,6 +86,16 @@ namespace PaintControl.Forms
             CargarDatos();
         }
 
+        private void DeshabilitarScrollCombo(ComboBox cmb)
+        {
+            cmb.MouseWheel += (s, e) => ((HandledMouseEventArgs)e).Handled = true;
+        }
+
+        private void DeshabilitarScrollNumeric(NumericUpDown num)
+        {
+            num.MouseWheel += (s, e) => ((HandledMouseEventArgs)e).Handled = true;
+        }
+
         private void ConfigurarFormulario(bool permitirEdicion)
         {
             this.Text = $"Detalle de Movimiento #{movimiento.NumeroMovimiento}";
@@ -141,14 +151,17 @@ namespace PaintControl.Forms
 
             body.Controls.Add(CrearFieldLabel("TIPO", padX, y));
             cmbTipoPintura = new ComboBox { Location = new Point(padX, y + 18), Width = cmbWidth, Font = FuenteInput, DropDownStyle = ComboBoxStyle.DropDownList, Enabled = false };
+            DeshabilitarScrollCombo(cmbTipoPintura);
             body.Controls.Add(cmbTipoPintura);
 
             body.Controls.Add(CrearFieldLabel("L\u00cdNEA", padX + cmbWidth + gap, y));
             cmbLineaPintura = new ComboBox { Location = new Point(padX + cmbWidth + gap, y + 18), Width = cmbWidth, Font = FuenteInput, DropDownStyle = ComboBoxStyle.DropDownList, Enabled = false };
+            DeshabilitarScrollCombo(cmbLineaPintura);
             body.Controls.Add(cmbLineaPintura);
 
             body.Controls.Add(CrearFieldLabel("ACABADO", padX + (cmbWidth + gap) * 2, y));
             cmbAcabado = new ComboBox { Location = new Point(padX + (cmbWidth + gap) * 2, y + 18), Width = cmbWidth, Font = FuenteInput, DropDownStyle = ComboBoxStyle.DropDownList, Enabled = false };
+            DeshabilitarScrollCombo(cmbAcabado);
             body.Controls.Add(cmbAcabado);
             y += 50;
 
@@ -179,15 +192,18 @@ namespace PaintControl.Forms
             body.Controls.Add(CrearFieldLabel("UNIDAD", padX, y));
             cmbUnidad = new ComboBox { Location = new Point(padX, y + 18), Width = halfWidth, Font = FuenteInput, DropDownStyle = ComboBoxStyle.DropDownList, Enabled = false };
             cmbUnidad.Items.AddRange(new object[] { "LT", "GL", "KG", "PZ", "M2", "M3", "Litro", "Gal\u00f3n", "Cubeta" });
+            DeshabilitarScrollCombo(cmbUnidad);
             body.Controls.Add(cmbUnidad);
 
             body.Controls.Add(CrearFieldLabel("CANTIDAD", padX + halfWidth + gap, y));
-            numCantidad = new NumericUpDown { Location = new Point(padX + halfWidth + gap, y + 18), Width = halfWidth, Font = FuenteInput, DecimalPlaces = 2, Minimum = 0.01m, Maximum = 9999.99m, ReadOnly = true, BorderStyle = BorderStyle.FixedSingle };
+            numCantidad = new NumericUpDown { Location = new Point(padX + halfWidth + gap, y + 18), Width = halfWidth, Font = FuenteInput, DecimalPlaces = 0, Minimum = 1, Maximum = 9999, ReadOnly = true, BorderStyle = BorderStyle.FixedSingle };
+            DeshabilitarScrollNumeric(numCantidad);
             body.Controls.Add(numCantidad);
             y += 52;
 
             body.Controls.Add(CrearFieldLabel("PRECIO", padX, y));
             numPrecio = new NumericUpDown { Location = new Point(padX, y + 18), Width = halfWidth, Font = FuenteInput, DecimalPlaces = 2, Minimum = 0.01m, Maximum = 99999.99m, ReadOnly = true, BorderStyle = BorderStyle.FixedSingle };
+            DeshabilitarScrollNumeric(numPrecio);
             body.Controls.Add(numPrecio);
 
             Panel totalPanel = CrearTotalPanel(padX + halfWidth + gap, y + 2, halfWidth);
@@ -313,8 +329,8 @@ namespace PaintControl.Forms
             }
             else if (cmbUnidad.Items.Count > 0) cmbUnidad.SelectedIndex = 0;
 
-            numCantidad.Value = movimiento.Cantidad;
-            numPrecio.Value = movimiento.Precio;
+            numCantidad.Value = Math.Max(numCantidad.Minimum, Math.Min(numCantidad.Maximum, Math.Round(movimiento.Cantidad)));
+            numPrecio.Value = Math.Max(numPrecio.Minimum, Math.Min(numPrecio.Maximum, movimiento.Precio));
             lblTotalValor.Text = $"${movimiento.Total:N2}";
             lblTotalValor.Location = new Point(lblTotalValor.Parent.Width - lblTotalValor.PreferredWidth - 12, 8);
 
