@@ -8,12 +8,16 @@ namespace PaintControl.Data
     {
         public DOALDbContext() : base("name=DOALConnection")
         {
-            // Crear la base de datos si no existe
-            Database.SetInitializer(new CreateDatabaseIfNotExists<DOALDbContext>());
+            // No intentar crear ni migrar la base de datos
+            // Las tablas ya existen (creadas manualmente o por script SQL)
+            Database.SetInitializer<DOALDbContext>(null);
         }
 
         public DbSet<Cliente> Clientes { get; set; }
         public DbSet<Movimiento> Movimientos { get; set; }
+        public DbSet<TipoPintura> TiposPintura { get; set; }
+        public DbSet<LineaPintura> LineasPintura { get; set; }
+        public DbSet<AcabadoPintura> AcabadosPintura { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
@@ -32,6 +36,20 @@ namespace PaintControl.Data
             modelBuilder.Entity<Movimiento>()
                 .Property(m => m.Precio)
                 .HasPrecision(10, 2);
+
+            // Configuración de relación TipoPintura -> Lineas
+            modelBuilder.Entity<LineaPintura>()
+                .HasRequired(l => l.TipoPintura)
+                .WithMany(t => t.Lineas)
+                .HasForeignKey(l => l.TipoPinturaId)
+                .WillCascadeOnDelete(true);
+
+            // Configuración de relación LineaPintura -> Acabados
+            modelBuilder.Entity<AcabadoPintura>()
+                .HasRequired(a => a.LineaPintura)
+                .WithMany(l => l.Acabados)
+                .HasForeignKey(a => a.LineaPinturaId)
+                .WillCascadeOnDelete(true);
 
             base.OnModelCreating(modelBuilder);
         }

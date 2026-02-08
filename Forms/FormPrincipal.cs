@@ -180,8 +180,7 @@ namespace PaintControl
                     MostrarListaClientes();
                     break;
                 case Keys.F10:
-                    MessageBox.Show("Módulo de Artículos en desarrollo...",
-                        "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    BtnArticulos_Click(null, null);
                     break;
                 case Keys.F11:
                     MessageBox.Show("Módulo de Bases en desarrollo...",
@@ -752,8 +751,8 @@ namespace PaintControl
 
         private void BtnArticulos_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Módulo de Artículos en desarrollo...",
-                "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            FormCatalogo formCatalogo = new FormCatalogo();
+            formCatalogo.ShowDialog(this);
         }
 
         private void BtnBases_Click(object sender, EventArgs e)

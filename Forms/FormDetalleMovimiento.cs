@@ -1,4 +1,5 @@
-﻿using PaintControl.Models;
+﻿using PaintControl.Data;
+using PaintControl.Models;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -15,11 +16,11 @@ namespace PaintControl.Forms
 
         private Movimiento movimiento;
         private bool modoEdicion;
+        private CatalogoService catalogoService;
 
-        // Referencias directas a controles principales
+        // Controles principales
         private DateTimePicker dtpFecha;
         private TextBox txtClave;
-        private TextBox txtDescripcion;
         private TextBox txtBase;
         private ComboBox cmbUnidad;
         private NumericUpDown numCantidad;
@@ -27,18 +28,24 @@ namespace PaintControl.Forms
         private Label lblTotalValor;
         private TableLayoutPanel panelFormulas;
 
+        // Catálogo
+        private ComboBox cmbTipoPintura;
+        private ComboBox cmbLineaPintura;
+        private ComboBox cmbAcabado;
+        private Label lblDescripcionValor;
+
         // Botones
         private Button btnEditar;
         private Button btnEliminar;
         private Button btnGuardar;
         private Button btnCancelarEdicion;
 
-        // Referencias directas a controles de formula
+        // Fórmulas
         private TextBox[] txtTipos = new TextBox[6];
         private TextBox[] txtValores1 = new TextBox[6];
         private TextBox[] txtValores2 = new TextBox[6];
 
-        // Colores del tema
+        // Colores
         private static readonly Color AzulPrimario = Color.FromArgb(47, 164, 231);
         private static readonly Color AzulOscuro = Color.FromArgb(46, 92, 138);
         private static readonly Color FondoTarjeta = Color.FromArgb(244, 247, 251);
@@ -54,24 +61,26 @@ namespace PaintControl.Forms
         private static readonly Color RojoEliminar = Color.FromArgb(220, 53, 69);
         private static readonly Color AzulEditar = Color.FromArgb(74, 143, 208);
 
-        // Fuentes cacheadas
-        private static readonly Font FuenteTitulo = new Font("Segoe UI", 16F, FontStyle.Bold);
+        // Fuentes
+        private static readonly Font FuenteTitulo = new Font("Segoe UI", 14F, FontStyle.Bold);
         private static readonly Font FuenteBadge = new Font("Segoe UI", 9F, FontStyle.Bold);
-        private static readonly Font FuenteInfoLabel = new Font("Segoe UI", 8.5F, FontStyle.Bold);
-        private static readonly Font FuenteInfoValor = new Font("Segoe UI", 11F, FontStyle.Bold);
+        private static readonly Font FuenteInfoLabel = new Font("Segoe UI", 8F, FontStyle.Bold);
+        private static readonly Font FuenteInfoValor = new Font("Segoe UI", 10F, FontStyle.Bold);
         private static readonly Font FuenteSeccion = new Font("Segoe UI", 10F, FontStyle.Bold);
         private static readonly Font FuenteFieldLabel = new Font("Segoe UI", 9F, FontStyle.Bold);
-        private static readonly Font FuenteInput = new Font("Segoe UI", 11F);
-        private static readonly Font FuenteBoton = new Font("Segoe UI", 11F, FontStyle.Bold);
-        private static readonly Font FuenteTotalLabel = new Font("Segoe UI", 11F, FontStyle.Bold);
-        private static readonly Font FuenteTotalValor = new Font("Segoe UI", 18F, FontStyle.Bold);
-        private static readonly Font FuenteFormula = new Font("Segoe UI", 9.5F);
+        private static readonly Font FuenteInput = new Font("Segoe UI", 10F);
+        private static readonly Font FuenteBoton = new Font("Segoe UI", 10F, FontStyle.Bold);
+        private static readonly Font FuenteTotalLabel = new Font("Segoe UI", 10F, FontStyle.Bold);
+        private static readonly Font FuenteTotalValor = new Font("Segoe UI", 16F, FontStyle.Bold);
+        private static readonly Font FuenteFormula = new Font("Segoe UI", 9F);
         private static readonly Font FuenteIgual = new Font("Segoe UI", 10F, FontStyle.Bold);
+        private static readonly Font FuenteDescripcion = new Font("Segoe UI", 11F, FontStyle.Bold);
 
         public FormDetalleMovimiento(Movimiento movimiento, bool permitirEdicion = true)
         {
             this.movimiento = movimiento;
             this.modoEdicion = false;
+            this.catalogoService = new CatalogoService();
             InitializeComponent();
             ConfigurarFormulario(permitirEdicion);
             CargarDatos();
@@ -80,231 +89,147 @@ namespace PaintControl.Forms
         private void ConfigurarFormulario(bool permitirEdicion)
         {
             this.Text = $"Detalle de Movimiento #{movimiento.NumeroMovimiento}";
-            this.Size = new Size(780, 780);
+            this.Size = new Size(720, 720);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.MinimizeBox = true;
             this.BackColor = Color.White;
 
-            // ===== HEADER AZUL SOLIDO =====
-            Panel headerPanel = new Panel
-            {
-                Height = 60,
-                BackColor = AzulPrimario,
-                Dock = DockStyle.Top
-            };
-
-            Label lblTitulo = new Label
-            {
-                Text = $"📋  Movimiento #{movimiento.NumeroMovimiento}",
-                Font = FuenteTitulo,
-                ForeColor = Color.White,
-                Location = new Point(24, 15),
-                AutoSize = true
-            };
-
-            Label lblBadge = new Label
-            {
-                Text = "DETALLE",
-                Font = FuenteBadge,
-                ForeColor = Color.White,
-                BackColor = Color.FromArgb(60, 255, 255, 255),
-                AutoSize = true,
-                Padding = new Padding(10, 4, 10, 4),
-                TextAlign = ContentAlignment.MiddleCenter
-            };
-
+            // ===== HEADER =====
+            Panel headerPanel = new Panel { Height = 50, BackColor = AzulPrimario, Dock = DockStyle.Top };
+            Label lblTitulo = new Label { Text = $"\U0001f4cb  Movimiento #{movimiento.NumeroMovimiento}", Font = FuenteTitulo, ForeColor = Color.White, Location = new Point(20, 12), AutoSize = true };
+            Label lblBadge = new Label { Text = "DETALLE", Font = FuenteBadge, ForeColor = Color.White, BackColor = Color.FromArgb(60, 255, 255, 255), AutoSize = true, Padding = new Padding(8, 3, 8, 3) };
             headerPanel.Controls.Add(lblTitulo);
             headerPanel.Controls.Add(lblBadge);
+            headerPanel.Layout += (s, e) => { lblBadge.Location = new Point(headerPanel.Width - lblBadge.Width - 20, (headerPanel.Height - lblBadge.Height) / 2); };
 
-            headerPanel.Layout += (s, e) =>
-            {
-                lblBadge.Location = new Point(headerPanel.Width - lblBadge.Width - 24, (headerPanel.Height - lblBadge.Height) / 2);
-            };
+            // ===== SCROLL =====
+            Panel scrollPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Color.White };
+            Panel body = new Panel { Location = new Point(0, 0), Size = new Size(700, 640), BackColor = Color.White };
 
-            // ===== PANEL SCROLLABLE =====
-            Panel scrollPanel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                AutoScroll = true,
-                BackColor = Color.White
-            };
+            int padX = 20, y = 15, fullWidth = 655, halfWidth = 317, gap = 20;
+            int cardWidth = (fullWidth - gap * 2) / 3, cardHeight = 55;
 
-            Panel body = new Panel
-            {
-                Location = new Point(0, 0),
-                Size = new Size(760, 680),
-                BackColor = Color.White
-            };
+            dtpFecha = new DateTimePicker { Format = DateTimePickerFormat.Short, Font = FuenteInput, Location = new Point(-300, -300), Size = new Size(1, 1), Enabled = false };
 
-            int padX = 28;
-            int y = 20;
-            int fullWidth = 700;
-            int halfWidth = 340;
-            int gap = 20;
-
-            // ===== INFO CARDS =====
-            int cardWidth = (fullWidth - gap * 2) / 3;
-            int cardHeight = 64;
-
-            Panel card1 = CrearInfoCard("Nº MOVIMIENTO", movimiento.NumeroMovimiento.ToString(), padX, y, cardWidth, cardHeight);
-
-            dtpFecha = new DateTimePicker
-            {
-                Format = DateTimePickerFormat.Short,
-                Font = FuenteInput,
-                Location = new Point(-300, -300),
-                Size = new Size(1, 1),
-                Enabled = false
-            };
-            Panel card2 = CrearInfoCard("FECHA", movimiento.Fecha.ToShortDateString(), padX + cardWidth + gap, y, cardWidth, cardHeight);
-
-            string nombreCliente = movimiento.Cliente != null ? movimiento.Cliente.Nombre : "—";
-            Panel card3 = CrearInfoCard("CLIENTE", nombreCliente, padX + (cardWidth + gap) * 2, y, cardWidth, cardHeight);
-
-            body.Controls.Add(card1);
-            body.Controls.Add(card2);
-            body.Controls.Add(card3);
+            string nombreCliente = movimiento.Cliente != null ? movimiento.Cliente.Nombre : "\u2014";
+            body.Controls.Add(CrearInfoCard("N\u00ba MOVIMIENTO", movimiento.NumeroMovimiento.ToString(), padX, y, cardWidth, cardHeight));
+            body.Controls.Add(CrearInfoCard("FECHA", movimiento.Fecha.ToShortDateString(), padX + cardWidth + gap, y, cardWidth, cardHeight));
+            body.Controls.Add(CrearInfoCard("CLIENTE", nombreCliente, padX + (cardWidth + gap) * 2, y, cardWidth, cardHeight));
             body.Controls.Add(dtpFecha);
-            y += cardHeight + 20;
+            y += cardHeight + 15;
 
-            // ===== SECCION: DATOS DEL PRODUCTO =====
-            Panel secProducto = CrearSeccionTitulo("DATOS DEL PRODUCTO", padX, y, fullWidth);
-            body.Controls.Add(secProducto);
-            y += 34;
+            // ===== DATOS DEL PRODUCTO =====
+            body.Controls.Add(CrearSeccionTitulo("DATOS DEL PRODUCTO", padX, y, fullWidth));
+            y += 30;
 
-            Label lblClaveLabel = CrearFieldLabel("CLAVE DEL COLOR", padX, y);
-            txtClave = CrearTextBoxModerno(padX, y + 20, halfWidth, true);
-            body.Controls.Add(lblClaveLabel);
+            body.Controls.Add(CrearFieldLabel("CLAVE DEL COLOR", padX, y));
+            txtClave = CrearTextBoxModerno(padX, y + 18, halfWidth, true);
             body.Controls.Add(txtClave);
 
-            Label lblBaseLabel = CrearFieldLabel("BASE", padX + halfWidth + gap, y);
-            txtBase = CrearTextBoxModerno(padX + halfWidth + gap, y + 20, halfWidth, true);
-            txtBase.MaxLength = 50;
-            body.Controls.Add(lblBaseLabel);
+            body.Controls.Add(CrearFieldLabel("BASE", padX + halfWidth + gap, y));
+            txtBase = CrearTextBoxModerno(padX + halfWidth + gap, y + 18, halfWidth, true);
             body.Controls.Add(txtBase);
-            y += 60;
+            y += 52;
 
-            Label lblDescLabel = CrearFieldLabel("DESCRIPCIÓN", padX, y);
-            txtDescripcion = CrearTextBoxModerno(padX, y + 20, fullWidth, true);
-            body.Controls.Add(lblDescLabel);
-            body.Controls.Add(txtDescripcion);
-            y += 60;
+            // ===== DESCRIPCIÓN (CATÁLOGO) =====
+            body.Controls.Add(CrearSeccionTitulo("DESCRIPCI\u00d3N (CAT\u00c1LOGO)", padX, y, fullWidth));
+            y += 30;
 
-            // ===== SECCION: INFORMACION DE VENTA =====
-            Panel secVenta = CrearSeccionTitulo("INFORMACIÓN DE VENTA", padX, y, fullWidth);
-            body.Controls.Add(secVenta);
-            y += 34;
+            int cmbWidth = (fullWidth - gap * 2) / 3;
 
-            Label lblUnidadLabel = CrearFieldLabel("UNIDAD", padX, y);
-            cmbUnidad = new ComboBox
+            body.Controls.Add(CrearFieldLabel("TIPO", padX, y));
+            cmbTipoPintura = new ComboBox { Location = new Point(padX, y + 18), Width = cmbWidth, Font = FuenteInput, DropDownStyle = ComboBoxStyle.DropDownList, Enabled = false };
+            body.Controls.Add(cmbTipoPintura);
+
+            body.Controls.Add(CrearFieldLabel("L\u00cdNEA", padX + cmbWidth + gap, y));
+            cmbLineaPintura = new ComboBox { Location = new Point(padX + cmbWidth + gap, y + 18), Width = cmbWidth, Font = FuenteInput, DropDownStyle = ComboBoxStyle.DropDownList, Enabled = false };
+            body.Controls.Add(cmbLineaPintura);
+
+            body.Controls.Add(CrearFieldLabel("ACABADO", padX + (cmbWidth + gap) * 2, y));
+            cmbAcabado = new ComboBox { Location = new Point(padX + (cmbWidth + gap) * 2, y + 18), Width = cmbWidth, Font = FuenteInput, DropDownStyle = ComboBoxStyle.DropDownList, Enabled = false };
+            body.Controls.Add(cmbAcabado);
+            y += 50;
+
+            body.Controls.Add(CrearFieldLabel("DESCRIPCI\u00d3N", padX, y));
+            lblDescripcionValor = new Label
             {
-                Location = new Point(padX, y + 20),
-                Width = halfWidth,
-                Font = FuenteInput,
-                DropDownStyle = ComboBoxStyle.DropDownList,
-                FlatStyle = FlatStyle.Flat,
-                Enabled = false
+                Location = new Point(padX, y + 18),
+                Size = new Size(fullWidth, 28),
+                Font = FuenteDescripcion,
+                ForeColor = AzulOscuro,
+                BackColor = FondoTarjeta,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(8, 0, 0, 0),
+                Text = ""
             };
-            // ✅ CORREGIDO: Usar los valores reales que vienen de la base de datos
-            cmbUnidad.Items.AddRange(new object[] { "LT", "GL", "KG", "PZ", "M2", "M3", "Litro", "Galón", "Cubeta" });
-            body.Controls.Add(lblUnidadLabel);
+            lblDescripcionValor.Paint += (s, e) =>
+            {
+                using (Pen pen = new Pen(BordeTarjeta, 1))
+                    e.Graphics.DrawRectangle(pen, 0, 0, lblDescripcionValor.Width - 1, lblDescripcionValor.Height - 1);
+            };
+            body.Controls.Add(lblDescripcionValor);
+            y += 52;
+
+            // ===== INFORMACIÓN DE VENTA =====
+            body.Controls.Add(CrearSeccionTitulo("INFORMACI\u00d3N DE VENTA", padX, y, fullWidth));
+            y += 30;
+
+            body.Controls.Add(CrearFieldLabel("UNIDAD", padX, y));
+            cmbUnidad = new ComboBox { Location = new Point(padX, y + 18), Width = halfWidth, Font = FuenteInput, DropDownStyle = ComboBoxStyle.DropDownList, Enabled = false };
+            cmbUnidad.Items.AddRange(new object[] { "LT", "GL", "KG", "PZ", "M2", "M3", "Litro", "Gal\u00f3n", "Cubeta" });
             body.Controls.Add(cmbUnidad);
 
-            Label lblCantidadLabel = CrearFieldLabel("CANTIDAD", padX + halfWidth + gap, y);
-            numCantidad = new NumericUpDown
-            {
-                Location = new Point(padX + halfWidth + gap, y + 20),
-                Width = halfWidth,
-                Font = FuenteInput,
-                DecimalPlaces = 2,
-                Minimum = 0.01m,
-                Maximum = 9999.99m,
-                ReadOnly = true,
-                BorderStyle = BorderStyle.FixedSingle
-            };
-            body.Controls.Add(lblCantidadLabel);
+            body.Controls.Add(CrearFieldLabel("CANTIDAD", padX + halfWidth + gap, y));
+            numCantidad = new NumericUpDown { Location = new Point(padX + halfWidth + gap, y + 18), Width = halfWidth, Font = FuenteInput, DecimalPlaces = 2, Minimum = 0.01m, Maximum = 9999.99m, ReadOnly = true, BorderStyle = BorderStyle.FixedSingle };
             body.Controls.Add(numCantidad);
-            y += 60;
+            y += 52;
 
-            Label lblPrecioLabel = CrearFieldLabel("PRECIO", padX, y);
-            numPrecio = new NumericUpDown
-            {
-                Location = new Point(padX, y + 20),
-                Width = halfWidth,
-                Font = FuenteInput,
-                DecimalPlaces = 2,
-                Minimum = 0.01m,
-                Maximum = 99999.99m,
-                ReadOnly = true,
-                BorderStyle = BorderStyle.FixedSingle
-            };
-            body.Controls.Add(lblPrecioLabel);
+            body.Controls.Add(CrearFieldLabel("PRECIO", padX, y));
+            numPrecio = new NumericUpDown { Location = new Point(padX, y + 18), Width = halfWidth, Font = FuenteInput, DecimalPlaces = 2, Minimum = 0.01m, Maximum = 99999.99m, ReadOnly = true, BorderStyle = BorderStyle.FixedSingle };
             body.Controls.Add(numPrecio);
 
             Panel totalPanel = CrearTotalPanel(padX + halfWidth + gap, y + 2, halfWidth);
             body.Controls.Add(totalPanel);
-            y += 70;
+            y += 60;
 
-            // ===== SECCION: FORMULA DE COLOR =====
-            Panel secFormula = CrearSeccionTitulo("FÓRMULA DE COLOR", padX, y, fullWidth);
-            body.Controls.Add(secFormula);
-            y += 34;
+            // ===== FÓRMULA =====
+            body.Controls.Add(CrearSeccionTitulo("F\u00d3RMULA DE COLOR", padX, y, fullWidth));
+            y += 30;
 
             panelFormulas = CrearPanelFormulas(padX, y, fullWidth, true);
             body.Controls.Add(panelFormulas);
-            y += panelFormulas.Height + 20;
+            y += panelFormulas.Height + 15;
 
             // ===== BOTONES =====
             int btnX = padX;
+            btnEditar = CrearBoton("\u270f\ufe0f  Editar", AzulEditar, btnX, y); btnEditar.Visible = permitirEdicion; btnX += 155;
+            btnEliminar = CrearBoton("\U0001f5d1\ufe0f  Eliminar", RojoEliminar, btnX, y); btnEliminar.Visible = permitirEdicion; btnX += 155;
+            btnGuardar = CrearBoton("\U0001f4be  Guardar", VerdePrimario, padX, y); btnGuardar.Visible = false;
+            btnCancelarEdicion = CrearBoton("\u2715  Cancelar", GrisBotonSecundario, padX + 155, y); btnCancelarEdicion.ForeColor = TextoLabel; btnCancelarEdicion.Visible = false;
+            Button btnCerrar = CrearBoton("Cerrar", GrisBotonSecundario, btnX, y); btnCerrar.ForeColor = TextoLabel;
 
-            btnEditar = CrearBoton("✏️  Editar", AzulEditar, btnX, y);
-            btnEditar.Visible = permitirEdicion;
-            btnX += 170;
-
-            btnEliminar = CrearBoton("🗑️  Eliminar", RojoEliminar, btnX, y);
-            btnEliminar.Visible = permitirEdicion;
-            btnX += 170;
-
-            btnGuardar = CrearBoton("💾  Guardar", VerdePrimario, padX, y);
-            btnGuardar.Visible = false;
-
-            btnCancelarEdicion = CrearBoton("✕  Cancelar", GrisBotonSecundario, padX + 170, y);
-            btnCancelarEdicion.ForeColor = TextoLabel;
-            btnCancelarEdicion.Visible = false;
-
-            Button btnCerrar = CrearBoton("Cerrar", GrisBotonSecundario, btnX, y);
-            btnCerrar.ForeColor = TextoLabel;
-
-            body.Controls.Add(btnEditar);
-            body.Controls.Add(btnEliminar);
-            body.Controls.Add(btnGuardar);
-            body.Controls.Add(btnCancelarEdicion);
-            body.Controls.Add(btnCerrar);
-            y += 60;
+            body.Controls.AddRange(new Control[] { btnEditar, btnEliminar, btnGuardar, btnCancelarEdicion, btnCerrar });
+            y += 55;
 
             body.Height = y;
-
             scrollPanel.Controls.Add(body);
-
-            // Header PRIMERO (Dock.Top), luego scroll
             this.Controls.Add(scrollPanel);
             this.Controls.Add(headerPanel);
 
             // ===== EVENTOS =====
-            EventHandler calcularTotal = (s, e) =>
+            EventHandler calcTotal = (s, e) =>
             {
                 decimal total = numCantidad.Value * numPrecio.Value;
                 lblTotalValor.Text = $"${total:N2}";
-                // ✅ CORREGIDO: Reposicionar el label después de cambiar el texto
-                lblTotalValor.Location = new Point(
-                    totalPanel.Width - lblTotalValor.PreferredWidth - 16,
-                    10
-                );
+                lblTotalValor.Location = new Point(totalPanel.Width - lblTotalValor.PreferredWidth - 12, 8);
             };
-            numCantidad.ValueChanged += calcularTotal;
-            numPrecio.ValueChanged += calcularTotal;
+            numCantidad.ValueChanged += calcTotal;
+            numPrecio.ValueChanged += calcTotal;
+
+            // Cascada del catálogo (habilitado solo en modo edición)
+            ConfigurarCatalogoCascada();
 
             btnEditar.Click += (s, e) => ActivarModoEdicion();
             btnCancelarEdicion.Click += (s, e) => DesactivarModoEdicion();
@@ -313,308 +238,62 @@ namespace PaintControl.Forms
             btnCerrar.Click += (s, e) => this.Close();
         }
 
-        // ===== HELPERS =====
+        // ===== CATÁLOGO CASCADA =====
 
-        private Panel CrearInfoCard(string label, string value, int x, int y, int width, int height)
+        private void ConfigurarCatalogoCascada()
         {
-            Panel card = new Panel
+            cmbTipoPintura.SelectedIndexChanged += (s, e) =>
             {
-                Location = new Point(x, y),
-                Size = new Size(width, height),
-                BackColor = FondoTarjeta
-            };
+                if (!modoEdicion) return;
+                cmbLineaPintura.Items.Clear();
+                cmbAcabado.Items.Clear();
+                cmbLineaPintura.Enabled = false;
+                cmbAcabado.Enabled = false;
 
-            card.Paint += (s, e) =>
-            {
-                using (Pen pen = new Pen(BordeTarjeta, 1))
+                if (cmbTipoPintura.SelectedItem is TipoPintura tipo)
                 {
-                    Rectangle rect = new Rectangle(0, 0, card.Width - 1, card.Height - 1);
-                    using (GraphicsPath path = CrearRectanguloRedondeado(rect, 10))
+                    var lineas = catalogoService.ObtenerLineasPorTipo(tipo.Id);
+                    if (lineas.Count > 0)
                     {
-                        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                        e.Graphics.DrawPath(pen, path);
+                        foreach (var linea in lineas) cmbLineaPintura.Items.Add(linea);
+                        cmbLineaPintura.SelectedIndex = 0;
+                        cmbLineaPintura.Enabled = true;
                     }
                 }
+                ActualizarDescripcion();
             };
 
-            Label lblLabel = new Label
+            cmbLineaPintura.SelectedIndexChanged += (s, e) =>
             {
-                Text = label,
-                Font = FuenteInfoLabel,
-                ForeColor = TextoSecundario,
-                Location = new Point(14, 10),
-                AutoSize = true
-            };
+                if (!modoEdicion) return;
+                cmbAcabado.Items.Clear();
+                cmbAcabado.Enabled = false;
 
-            Label lblValue = new Label
-            {
-                Text = value,
-                Font = FuenteInfoValor,
-                ForeColor = AzulOscuro,
-                Location = new Point(14, 32),
-                Size = new Size(width - 28, height - 36),
-                AutoEllipsis = true
-            };
-
-            card.Controls.Add(lblLabel);
-            card.Controls.Add(lblValue);
-
-            return card;
-        }
-
-        private Panel CrearSeccionTitulo(string texto, int x, int y, int width)
-        {
-            Panel seccion = new Panel
-            {
-                Location = new Point(x, y),
-                Size = new Size(width, 28),
-                BackColor = Color.Transparent
-            };
-
-            seccion.Paint += (s, e) =>
-            {
-                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-
-                using (Brush brush = new SolidBrush(AzulPrimario))
-                    e.Graphics.FillRectangle(brush, 0, 4, 4, 16);
-
-                using (Brush brush = new SolidBrush(AzulPrimario))
-                    e.Graphics.DrawString(texto, FuenteSeccion, brush, 12, 2);
-
-                using (Pen pen = new Pen(Color.FromArgb(232, 244, 253), 2))
-                    e.Graphics.DrawLine(pen, 0, seccion.Height - 1, seccion.Width, seccion.Height - 1);
-            };
-
-            return seccion;
-        }
-
-        private Label CrearFieldLabel(string texto, int x, int y)
-        {
-            return new Label
-            {
-                Text = texto,
-                Font = FuenteFieldLabel,
-                ForeColor = TextoLabel,
-                Location = new Point(x, y),
-                AutoSize = true
-            };
-        }
-
-        private TextBox CrearTextBoxModerno(int x, int y, int width, bool readOnly = false)
-        {
-            return new TextBox
-            {
-                Location = new Point(x, y),
-                Width = width,
-                Font = FuenteInput,
-                CharacterCasing = CharacterCasing.Upper,
-                BorderStyle = BorderStyle.FixedSingle,
-                ReadOnly = readOnly
-            };
-        }
-
-        private Panel CrearTotalPanel(int x, int y, int width)
-        {
-            Panel panel = new Panel
-            {
-                Location = new Point(x, y),
-                Size = new Size(width, 55),
-                BackColor = FondoVerde
-            };
-
-            panel.Paint += (s, e) =>
-            {
-                using (Pen pen = new Pen(BordeVerde, 2))
+                if (cmbLineaPintura.SelectedItem is LineaPintura linea)
                 {
-                    Rectangle rect = new Rectangle(0, 0, panel.Width - 1, panel.Height - 1);
-                    using (GraphicsPath path = CrearRectanguloRedondeado(rect, 10))
+                    var acabados = catalogoService.ObtenerAcabadosPorLinea(linea.Id);
+                    if (acabados.Count > 0)
                     {
-                        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                        e.Graphics.DrawPath(pen, path);
+                        foreach (var acabado in acabados) cmbAcabado.Items.Add(acabado);
+                        cmbAcabado.SelectedIndex = 0;
+                        cmbAcabado.Enabled = true;
                     }
                 }
+                ActualizarDescripcion();
             };
 
-            Label lblTotal = new Label
+            cmbAcabado.SelectedIndexChanged += (s, e) =>
             {
-                Text = "TOTAL",
-                Font = FuenteTotalLabel,
-                ForeColor = VerdePrimario,
-                Location = new Point(16, 17),
-                AutoSize = true
+                if (modoEdicion) ActualizarDescripcion();
             };
-
-            // ✅ CORREGIDO: Configurar el label del total correctamente
-            lblTotalValor = new Label
-            {
-                Text = "$0.00",
-                Font = FuenteTotalValor,
-                ForeColor = VerdeOscuro,
-                AutoSize = true,
-                TextAlign = ContentAlignment.MiddleRight
-            };
-
-            // Posicionar después de establecer el texto inicial
-            lblTotalValor.Location = new Point(width - lblTotalValor.PreferredWidth - 16, 10);
-
-            panel.Controls.Add(lblTotal);
-            panel.Controls.Add(lblTotalValor);
-
-            return panel;
         }
 
-        private TableLayoutPanel CrearPanelFormulas(int x, int y, int width, bool readOnly)
+        private void ActualizarDescripcion()
         {
-            TableLayoutPanel panel = new TableLayoutPanel
-            {
-                Name = "panelFormulas",
-                Location = new Point(x, y),
-                Width = width,
-                Height = 130,
-                BackColor = FondoFormula,
-                ColumnCount = 2,
-                RowCount = 3,
-                CellBorderStyle = TableLayoutPanelCellBorderStyle.None,
-                Padding = new Padding(12, 8, 12, 8)
-            };
-
-            panel.Paint += (s, e) =>
-            {
-                using (Pen pen = new Pen(BordeTarjeta, 1))
-                {
-                    Rectangle rect = new Rectangle(0, 0, panel.Width - 1, panel.Height - 1);
-                    using (GraphicsPath path = CrearRectanguloRedondeado(rect, 10))
-                    {
-                        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                        e.Graphics.DrawPath(pen, path);
-                    }
-                }
-            };
-
-            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            for (int i = 0; i < 3; i++)
-                panel.RowStyles.Add(new RowStyle(SizeType.Percent, 33.33F));
-
-            for (int i = 0; i < 6; i++)
-            {
-                int col = i / 3;
-                int row = i % 3;
-
-                Panel filaPanel = new Panel
-                {
-                    Dock = DockStyle.Fill,
-                    Margin = new Padding(2),
-                    BackColor = FondoFormula
-                };
-
-                FlowLayoutPanel flowPanel = new FlowLayoutPanel
-                {
-                    FlowDirection = FlowDirection.LeftToRight,
-                    AutoSize = true,
-                    WrapContents = false,
-                    Anchor = AnchorStyles.None
-                };
-
-                TextBox txtTipo = new TextBox
-                {
-                    Name = $"txtTipo{i}",
-                    Width = 56,
-                    Font = FuenteFormula,
-                    TextAlign = HorizontalAlignment.Center,
-                    CharacterCasing = CharacterCasing.Upper,
-                    BorderStyle = BorderStyle.FixedSingle,
-                    ReadOnly = readOnly,
-                    Margin = new Padding(0)
-                };
-                txtTipos[i] = txtTipo;
-
-                Label lblIgual = new Label
-                {
-                    Text = "=",
-                    Font = FuenteIgual,
-                    ForeColor = Color.FromArgb(160, 174, 192),
-                    AutoSize = true,
-                    TextAlign = ContentAlignment.MiddleCenter,
-                    Margin = new Padding(5, 0, 5, 0)
-                };
-
-                TextBox txtValor1 = new TextBox
-                {
-                    Name = $"txtValor1_{i}",
-                    Width = 56,
-                    Font = FuenteFormula,
-                    TextAlign = HorizontalAlignment.Center,
-                    BorderStyle = BorderStyle.FixedSingle,
-                    ReadOnly = readOnly,
-                    Margin = new Padding(0, 0, 5, 0)
-                };
-                txtValores1[i] = txtValor1;
-
-                TextBox txtValor2 = new TextBox
-                {
-                    Name = $"txtValor2_{i}",
-                    Width = 56,
-                    Font = FuenteFormula,
-                    TextAlign = HorizontalAlignment.Center,
-                    BorderStyle = BorderStyle.FixedSingle,
-                    ReadOnly = readOnly,
-                    Margin = new Padding(0)
-                };
-                txtValores2[i] = txtValor2;
-
-                flowPanel.Controls.AddRange(new Control[] { txtTipo, lblIgual, txtValor1, txtValor2 });
-
-                flowPanel.Location = new Point(
-                    (filaPanel.Width - flowPanel.Width) / 2,
-                    (filaPanel.Height - flowPanel.Height) / 2
-                );
-
-                filaPanel.Controls.Add(flowPanel);
-
-                filaPanel.Resize += (s, e) =>
-                {
-                    if (flowPanel.Parent != null)
-                    {
-                        flowPanel.Location = new Point(
-                            Math.Max(0, (filaPanel.Width - flowPanel.Width) / 2),
-                            Math.Max(0, (filaPanel.Height - flowPanel.Height) / 2)
-                        );
-                    }
-                };
-
-                panel.Controls.Add(filaPanel, col, row);
-            }
-
-            return panel;
-        }
-
-        private Button CrearBoton(string texto, Color backColor, int x, int y)
-        {
-            Button btn = new Button
-            {
-                Text = texto,
-                Size = new Size(155, 44),
-                Location = new Point(x, y),
-                BackColor = backColor,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Font = FuenteBoton,
-                Cursor = Cursors.Hand
-            };
-            btn.FlatAppearance.BorderSize = 0;
-            return btn;
-        }
-
-        private GraphicsPath CrearRectanguloRedondeado(Rectangle rect, int radius)
-        {
-            GraphicsPath path = new GraphicsPath();
-            path.AddArc(rect.X, rect.Y, radius, radius, 180, 90);
-            path.AddArc(rect.Right - radius, rect.Y, radius, radius, 270, 90);
-            path.AddArc(rect.Right - radius, rect.Bottom - radius, radius, radius, 0, 90);
-            path.AddArc(rect.X, rect.Bottom - radius, radius, radius, 90, 90);
-            path.CloseFigure();
-            return path;
+            string abrTipo = (cmbTipoPintura.SelectedItem is TipoPintura t) ? t.Abreviatura : "";
+            string abrLinea = (cmbLineaPintura.SelectedItem is LineaPintura l) ? l.Abreviatura : "";
+            string nombreAcabado = (cmbAcabado.SelectedItem is AcabadoPintura a) ? a.Nombre : "";
+            lblDescripcionValor.Text = catalogoService.ConstruirDescripcion(abrTipo, abrLinea, nombreAcabado);
         }
 
         // ===== CARGA DE DATOS =====
@@ -623,43 +302,21 @@ namespace PaintControl.Forms
         {
             dtpFecha.Value = movimiento.Fecha;
             txtClave.Text = movimiento.ClaveColor ?? "";
-            txtDescripcion.Text = movimiento.Descripcion ?? "";
             txtBase.Text = movimiento.Base ?? "";
+            lblDescripcionValor.Text = movimiento.Descripcion ?? "";
 
-            // ✅ CORREGIDO: Cargar la unidad correctamente
             if (!string.IsNullOrWhiteSpace(movimiento.Unidad))
             {
-                // Buscar el índice del item que coincide
-                int index = cmbUnidad.FindStringExact(movimiento.Unidad);
-                if (index >= 0)
-                {
-                    cmbUnidad.SelectedIndex = index;
-                }
-                else
-                {
-                    // Si no lo encuentra, agregarlo y seleccionarlo
-                    cmbUnidad.Items.Add(movimiento.Unidad);
-                    cmbUnidad.SelectedItem = movimiento.Unidad;
-                }
+                int idx = cmbUnidad.FindStringExact(movimiento.Unidad);
+                if (idx >= 0) cmbUnidad.SelectedIndex = idx;
+                else { cmbUnidad.Items.Add(movimiento.Unidad); cmbUnidad.SelectedItem = movimiento.Unidad; }
             }
-            else
-            {
-                // Si está vacío, seleccionar el primero por defecto
-                if (cmbUnidad.Items.Count > 0)
-                {
-                    cmbUnidad.SelectedIndex = 0;
-                }
-            }
+            else if (cmbUnidad.Items.Count > 0) cmbUnidad.SelectedIndex = 0;
 
             numCantidad.Value = movimiento.Cantidad;
             numPrecio.Value = movimiento.Precio;
-
-            // ✅ CORREGIDO: Actualizar el total y reposicionar el label
             lblTotalValor.Text = $"${movimiento.Total:N2}";
-            lblTotalValor.Location = new Point(
-                lblTotalValor.Parent.Width - lblTotalValor.PreferredWidth - 16,
-                10
-            );
+            lblTotalValor.Location = new Point(lblTotalValor.Parent.Width - lblTotalValor.PreferredWidth - 12, 8);
 
             CargarFormula(movimiento.Formula);
         }
@@ -667,21 +324,13 @@ namespace PaintControl.Forms
         private void CargarFormula(string formula)
         {
             if (string.IsNullOrWhiteSpace(formula)) return;
-
             string[] lineas = formula.Split(new[] { '|', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
             for (int i = 0; i < lineas.Length && i < 6; i++)
             {
-                string linea = lineas[i].Trim();
-                if (string.IsNullOrEmpty(linea)) continue;
-
-                string[] partes = linea.Split(new[] { '=' }, StringSplitOptions.RemoveEmptyEntries);
+                string[] partes = lineas[i].Trim().Split(new[] { '=' }, StringSplitOptions.RemoveEmptyEntries);
                 if (partes.Length != 2) continue;
-
-                string tipo = partes[0].Trim();
                 string[] valores = partes[1].Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-
-                if (txtTipos[i] != null) txtTipos[i].Text = tipo;
+                if (txtTipos[i] != null) txtTipos[i].Text = partes[0].Trim();
                 if (valores.Length > 0 && txtValores1[i] != null) txtValores1[i].Text = valores[0];
                 if (valores.Length > 1 && txtValores2[i] != null) txtValores2[i].Text = valores[1];
             }
@@ -690,35 +339,35 @@ namespace PaintControl.Forms
         private string ObtenerFormula()
         {
             var formulas = new List<string>();
-
             for (int i = 0; i < 6; i++)
             {
-                if (txtTipos[i] == null || txtValores1[i] == null) continue;
-                if (string.IsNullOrWhiteSpace(txtTipos[i].Text)) continue;
-
-                string formula = $"{txtTipos[i].Text.Trim()} = {txtValores1[i].Text.Trim()}";
+                if (txtTipos[i] == null || string.IsNullOrWhiteSpace(txtTipos[i].Text)) continue;
+                string f = $"{txtTipos[i].Text.Trim()} = {txtValores1[i].Text.Trim()}";
                 if (txtValores2[i] != null && !string.IsNullOrWhiteSpace(txtValores2[i].Text))
-                    formula += $" {txtValores2[i].Text.Trim()}";
-
-                formulas.Add(formula);
+                    f += $" {txtValores2[i].Text.Trim()}";
+                formulas.Add(f);
             }
-
             return string.Join("|", formulas);
         }
 
-        // ===== MODO EDICION =====
+        // ===== MODO EDICIÓN =====
 
         private void ActivarModoEdicion()
         {
             modoEdicion = true;
-
             dtpFecha.Enabled = true;
             txtClave.ReadOnly = false;
-            txtDescripcion.ReadOnly = false;
             txtBase.ReadOnly = false;
             cmbUnidad.Enabled = true;
             numCantidad.ReadOnly = false;
             numPrecio.ReadOnly = false;
+
+            // Habilitar catálogo
+            cmbTipoPintura.Enabled = true;
+            cmbTipoPintura.Items.Clear();
+            var tipos = catalogoService.ObtenerTiposActivos();
+            foreach (var tipo in tipos) cmbTipoPintura.Items.Add(tipo);
+            // No seleccionar ninguno — el usuario elige si quiere cambiar la descripción
 
             for (int i = 0; i < 6; i++)
             {
@@ -727,24 +376,26 @@ namespace PaintControl.Forms
                 if (txtValores2[i] != null) txtValores2[i].ReadOnly = false;
             }
 
-            btnEditar.Visible = false;
-            btnEliminar.Visible = false;
-            btnGuardar.Visible = true;
-            btnCancelarEdicion.Visible = true;
+            btnEditar.Visible = false; btnEliminar.Visible = false;
+            btnGuardar.Visible = true; btnCancelarEdicion.Visible = true;
         }
 
         private void DesactivarModoEdicion()
         {
             modoEdicion = false;
             CargarDatos();
-
             dtpFecha.Enabled = false;
             txtClave.ReadOnly = true;
-            txtDescripcion.ReadOnly = true;
             txtBase.ReadOnly = true;
             cmbUnidad.Enabled = false;
             numCantidad.ReadOnly = true;
             numPrecio.ReadOnly = true;
+            cmbTipoPintura.Enabled = false;
+            cmbLineaPintura.Enabled = false;
+            cmbAcabado.Enabled = false;
+            cmbTipoPintura.Items.Clear();
+            cmbLineaPintura.Items.Clear();
+            cmbAcabado.Items.Clear();
 
             for (int i = 0; i < 6; i++)
             {
@@ -753,18 +404,22 @@ namespace PaintControl.Forms
                 if (txtValores2[i] != null) txtValores2[i].ReadOnly = true;
             }
 
-            btnEditar.Visible = true;
-            btnEliminar.Visible = true;
-            btnGuardar.Visible = false;
-            btnCancelarEdicion.Visible = false;
+            btnEditar.Visible = true; btnEliminar.Visible = true;
+            btnGuardar.Visible = false; btnCancelarEdicion.Visible = false;
         }
 
         private void GuardarCambios()
         {
-            if (string.IsNullOrWhiteSpace(txtClave.Text) || string.IsNullOrWhiteSpace(txtDescripcion.Text))
+            if (string.IsNullOrWhiteSpace(txtClave.Text))
             {
-                MessageBox.Show("La clave y descripción son obligatorias.",
-                    "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("La clave es obligatoria.", "Validaci\u00f3n", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string descripcion = lblDescripcionValor.Text.Trim();
+            if (string.IsNullOrWhiteSpace(descripcion))
+            {
+                MessageBox.Show("La descripci\u00f3n es obligatoria.", "Validaci\u00f3n", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -775,7 +430,7 @@ namespace PaintControl.Forms
                 ClienteId = movimiento.ClienteId,
                 Fecha = dtpFecha.Value,
                 ClaveColor = txtClave.Text.Trim(),
-                Descripcion = txtDescripcion.Text.Trim(),
+                Descripcion = descripcion,
                 Base = txtBase.Text.Trim(),
                 Unidad = cmbUnidad.SelectedItem?.ToString() ?? movimiento.Unidad,
                 Cantidad = numCantidad.Value,
@@ -790,18 +445,85 @@ namespace PaintControl.Forms
 
         private void EliminarMovimiento()
         {
-            var resultado = MessageBox.Show(
-                $"¿Está seguro de que desea eliminar el movimiento #{movimiento.NumeroMovimiento}?{Environment.NewLine}{Environment.NewLine}Esta acción no se puede deshacer.",
-                "Confirmar Eliminación",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Warning);
+            var r = MessageBox.Show($"\u00bfEliminar movimiento #{movimiento.NumeroMovimiento}?\n\nEsta acci\u00f3n no se puede deshacer.",
+                "Confirmar Eliminaci\u00f3n", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            if (r == DialogResult.Yes) { Eliminado = true; this.DialogResult = DialogResult.OK; this.Close(); }
+        }
 
-            if (resultado == DialogResult.Yes)
+        // ===== HELPERS =====
+
+        private Panel CrearInfoCard(string label, string value, int x, int y, int width, int height)
+        {
+            Panel card = new Panel { Location = new Point(x, y), Size = new Size(width, height), BackColor = FondoTarjeta };
+            card.Paint += (s, e) => { using (Pen p = new Pen(BordeTarjeta, 1)) using (GraphicsPath gp = CrearRR(new Rectangle(0, 0, card.Width - 1, card.Height - 1), 8)) { e.Graphics.SmoothingMode = SmoothingMode.AntiAlias; e.Graphics.DrawPath(p, gp); } };
+            card.Controls.Add(new Label { Text = label, Font = FuenteInfoLabel, ForeColor = TextoSecundario, Location = new Point(10, 6), AutoSize = true });
+            card.Controls.Add(new Label { Text = value, Font = FuenteInfoValor, ForeColor = AzulOscuro, Location = new Point(10, 26), Size = new Size(width - 20, height - 30), AutoEllipsis = true });
+            return card;
+        }
+
+        private Panel CrearSeccionTitulo(string texto, int x, int y, int width)
+        {
+            Panel s = new Panel { Location = new Point(x, y), Size = new Size(width, 24), BackColor = Color.Transparent };
+            s.Paint += (sender, e) => { using (Brush b = new SolidBrush(AzulPrimario)) { e.Graphics.FillRectangle(b, 0, 3, 4, 14); e.Graphics.DrawString(texto, FuenteSeccion, b, 12, 1); } using (Pen p = new Pen(Color.FromArgb(232, 244, 253), 1)) e.Graphics.DrawLine(p, 0, s.Height - 1, s.Width, s.Height - 1); };
+            return s;
+        }
+
+        private Label CrearFieldLabel(string t, int x, int y) => new Label { Text = t, Font = FuenteFieldLabel, ForeColor = TextoLabel, Location = new Point(x, y), AutoSize = true };
+
+        private TextBox CrearTextBoxModerno(int x, int y, int w, bool ro = false) => new TextBox { Location = new Point(x, y), Width = w, Font = FuenteInput, CharacterCasing = CharacterCasing.Upper, BorderStyle = BorderStyle.FixedSingle, ReadOnly = ro };
+
+        private Panel CrearTotalPanel(int x, int y, int width)
+        {
+            Panel panel = new Panel { Location = new Point(x, y), Size = new Size(width, 50), BackColor = FondoVerde };
+            panel.Paint += (s, e) => { using (Pen p = new Pen(BordeVerde, 2)) using (GraphicsPath gp = CrearRR(new Rectangle(0, 0, panel.Width - 1, panel.Height - 1), 8)) { e.Graphics.SmoothingMode = SmoothingMode.AntiAlias; e.Graphics.DrawPath(p, gp); } };
+            panel.Controls.Add(new Label { Text = "TOTAL", Font = FuenteTotalLabel, ForeColor = VerdePrimario, Location = new Point(12, 14), AutoSize = true });
+            lblTotalValor = new Label { Text = "$0.00", Font = FuenteTotalValor, ForeColor = VerdeOscuro, AutoSize = true };
+            lblTotalValor.Location = new Point(width - lblTotalValor.PreferredWidth - 12, 8);
+            panel.Controls.Add(lblTotalValor);
+            return panel;
+        }
+
+        private TableLayoutPanel CrearPanelFormulas(int x, int y, int width, bool readOnly)
+        {
+            TableLayoutPanel panel = new TableLayoutPanel { Location = new Point(x, y), Width = width, Height = 110, BackColor = FondoFormula, ColumnCount = 2, RowCount = 3, CellBorderStyle = TableLayoutPanelCellBorderStyle.None, Padding = new Padding(8, 5, 8, 5) };
+            panel.Paint += (s, e) => { using (Pen p = new Pen(BordeTarjeta, 1)) using (GraphicsPath gp = CrearRR(new Rectangle(0, 0, panel.Width - 1, panel.Height - 1), 8)) { e.Graphics.SmoothingMode = SmoothingMode.AntiAlias; e.Graphics.DrawPath(p, gp); } };
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            for (int i = 0; i < 3; i++) panel.RowStyles.Add(new RowStyle(SizeType.Percent, 33.33F));
+
+            for (int i = 0; i < 6; i++)
             {
-                Eliminado = true;
-                this.DialogResult = DialogResult.OK;
-                this.Close();
+                int col = i / 3, row = i % 3;
+                Panel fp = new Panel { Dock = DockStyle.Fill, Margin = new Padding(2), BackColor = FondoFormula };
+                FlowLayoutPanel fl = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, WrapContents = false };
+                txtTipos[i] = new TextBox { Width = 50, Font = FuenteFormula, TextAlign = HorizontalAlignment.Center, CharacterCasing = CharacterCasing.Upper, BorderStyle = BorderStyle.FixedSingle, ReadOnly = readOnly, Margin = new Padding(0) };
+                Label eq = new Label { Text = "=", Font = FuenteIgual, ForeColor = Color.FromArgb(160, 174, 192), AutoSize = true, Margin = new Padding(4, 0, 4, 0) };
+                txtValores1[i] = new TextBox { Width = 50, Font = FuenteFormula, TextAlign = HorizontalAlignment.Center, BorderStyle = BorderStyle.FixedSingle, ReadOnly = readOnly, Margin = new Padding(0, 0, 4, 0) };
+                txtValores2[i] = new TextBox { Width = 50, Font = FuenteFormula, TextAlign = HorizontalAlignment.Center, BorderStyle = BorderStyle.FixedSingle, ReadOnly = readOnly, Margin = new Padding(0) };
+                fl.Controls.AddRange(new Control[] { txtTipos[i], eq, txtValores1[i], txtValores2[i] });
+                fp.Controls.Add(fl);
+                fp.Resize += (s, e) => { fl.Location = new Point(Math.Max(0, (fp.Width - fl.Width) / 2), Math.Max(0, (fp.Height - fl.Height) / 2)); };
+                panel.Controls.Add(fp, col, row);
             }
+            return panel;
+        }
+
+        private Button CrearBoton(string texto, Color bc, int x, int y)
+        {
+            Button btn = new Button { Text = texto, Size = new Size(145, 40), Location = new Point(x, y), BackColor = bc, ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = FuenteBoton, Cursor = Cursors.Hand };
+            btn.FlatAppearance.BorderSize = 0;
+            return btn;
+        }
+
+        private GraphicsPath CrearRR(Rectangle rect, int r)
+        {
+            GraphicsPath p = new GraphicsPath();
+            p.AddArc(rect.X, rect.Y, r, r, 180, 90);
+            p.AddArc(rect.Right - r, rect.Y, r, r, 270, 90);
+            p.AddArc(rect.Right - r, rect.Bottom - r, r, r, 0, 90);
+            p.AddArc(rect.X, rect.Bottom - r, r, r, 90, 90);
+            p.CloseFigure();
+            return p;
         }
     }
 }

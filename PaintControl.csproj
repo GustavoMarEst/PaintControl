@@ -66,6 +66,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Data\CatalogoService.cs" />
     <Compile Include="Data\ClienteService.cs" />
     <Compile Include="Data\DOALDbContext.cs" />
     <Compile Include="Data\MovimientoService.cs" />
@@ -80,6 +81,12 @@
     </Compile>
     <Compile Include="Forms\FormAgregarMovimiento.Designer.cs">
       <DependentUpon>FormAgregarMovimiento.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\FormCatalogo.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\FormCatalogo.Designer.cs">
+      <DependentUpon>FormCatalogo.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\FormDetalleMovimiento.cs">
       <SubType>Form</SubType>
@@ -106,8 +113,11 @@
       <DependentUpon>Formtodosmovimientos.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrator\MigradorDBF.cs" />
+    <Compile Include="Models\AcabadoPintura.cs" />
     <Compile Include="Models\Cliente.cs" />
+    <Compile Include="Models\LineaPintura.cs" />
     <Compile Include="Models\Movimiento.cs" />
+    <Compile Include="Models\TipoPintura.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\RoundedButton.cs">
