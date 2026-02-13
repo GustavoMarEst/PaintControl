@@ -19,34 +19,34 @@ namespace PaintControl
 
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormPrincipal));
             this.headerPanel = new System.Windows.Forms.Panel();
             this.picLogo = new System.Windows.Forms.PictureBox();
             this.lblTituloTexto = new System.Windows.Forms.Label();
+            this.lblHora = new PaintControl.RoundedLabel();
             this.lblTitulo = new System.Windows.Forms.Label();
             this.mainPanel = new System.Windows.Forms.Panel();
-            this.emptyStatePanel = new System.Windows.Forms.Panel();
-            this.lblSinDatos = new System.Windows.Forms.Label();
-            this.lblInstruccion = new System.Windows.Forms.Label();
-            this.bottomPanel = new System.Windows.Forms.Panel();
             this.searchPanel = new PaintControl.RoundedPanel();
             this.panelTituloSearch = new System.Windows.Forms.Panel();
             this.lblBuscarCliente = new System.Windows.Forms.Label();
             this.lblCriterio = new System.Windows.Forms.Label();
             this.txtCriterio = new System.Windows.Forms.TextBox();
             this.btnBuscarInline = new PaintControl.RoundedButton();
+            this.emptyStatePanel = new System.Windows.Forms.Panel();
+            this.lblSinDatos = new System.Windows.Forms.Label();
+            this.lblInstruccion = new System.Windows.Forms.Label();
+            this.bottomPanel = new System.Windows.Forms.Panel();
             this.btnLimpiar = new PaintControl.RoundedButton();
             this.btnArticulos = new PaintControl.RoundedButton();
             this.btnVerClientes = new PaintControl.RoundedButton();
             this.btnTodosMovimientos = new PaintControl.RoundedButton();
-
-            this.lblHora = new PaintControl.RoundedLabel();
             this.headerPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.picLogo)).BeginInit();
             this.mainPanel.SuspendLayout();
-            this.emptyStatePanel.SuspendLayout();
-            this.bottomPanel.SuspendLayout();
             this.searchPanel.SuspendLayout();
             this.panelTituloSearch.SuspendLayout();
+            this.emptyStatePanel.SuspendLayout();
+            this.bottomPanel.SuspendLayout();
             this.SuspendLayout();
             // 
             // headerPanel
@@ -83,6 +83,20 @@ namespace PaintControl
             this.lblTituloTexto.TabIndex = 11;
             this.lblTituloTexto.Text = "Control de Clientes";
             // 
+            // lblHora
+            // 
+            this.lblHora.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblHora.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(47)))), ((int)(((byte)(164)))), ((int)(((byte)(231)))));
+            this.lblHora.CornerRadius = 12;
+            this.lblHora.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
+            this.lblHora.ForeColor = System.Drawing.Color.White;
+            this.lblHora.Location = new System.Drawing.Point(1050, 23);
+            this.lblHora.Name = "lblHora";
+            this.lblHora.Size = new System.Drawing.Size(140, 38);
+            this.lblHora.TabIndex = 1;
+            this.lblHora.Text = "11:50 AM";
+            this.lblHora.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
             // lblTitulo
             // 
             this.lblTitulo.Location = new System.Drawing.Point(0, 0);
@@ -92,8 +106,8 @@ namespace PaintControl
             // 
             // mainPanel
             // 
-            this.mainPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
+            this.mainPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.mainPanel.BackColor = System.Drawing.Color.Transparent;
             this.mainPanel.Controls.Add(this.searchPanel);
@@ -104,10 +118,87 @@ namespace PaintControl
             this.mainPanel.Size = new System.Drawing.Size(1200, 540);
             this.mainPanel.TabIndex = 1;
             // 
+            // searchPanel
+            // 
+            this.searchPanel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.searchPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(191)))), ((int)(((byte)(227)))), ((int)(((byte)(248)))));
+            this.searchPanel.Controls.Add(this.panelTituloSearch);
+            this.searchPanel.Controls.Add(this.lblCriterio);
+            this.searchPanel.Controls.Add(this.txtCriterio);
+            this.searchPanel.Controls.Add(this.btnBuscarInline);
+            this.searchPanel.CornerRadius = 20;
+            this.searchPanel.Location = new System.Drawing.Point(20, 15);
+            this.searchPanel.Name = "searchPanel";
+            this.searchPanel.Size = new System.Drawing.Size(1160, 120);
+            this.searchPanel.TabIndex = 0;
+            this.searchPanel.Paint += new System.Windows.Forms.PaintEventHandler(this.SearchPanel_Paint);
+            // 
+            // panelTituloSearch
+            // 
+            this.panelTituloSearch.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.panelTituloSearch.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(47)))), ((int)(((byte)(164)))), ((int)(((byte)(231)))));
+            this.panelTituloSearch.Controls.Add(this.lblBuscarCliente);
+            this.panelTituloSearch.Location = new System.Drawing.Point(0, 0);
+            this.panelTituloSearch.Name = "panelTituloSearch";
+            this.panelTituloSearch.Size = new System.Drawing.Size(1160, 50);
+            this.panelTituloSearch.TabIndex = 0;
+            // 
+            // lblBuscarCliente
+            // 
+            this.lblBuscarCliente.AutoSize = true;
+            this.lblBuscarCliente.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+            this.lblBuscarCliente.ForeColor = System.Drawing.Color.White;
+            this.lblBuscarCliente.Location = new System.Drawing.Point(15, 10);
+            this.lblBuscarCliente.Name = "lblBuscarCliente";
+            this.lblBuscarCliente.Size = new System.Drawing.Size(217, 32);
+            this.lblBuscarCliente.TabIndex = 0;
+            this.lblBuscarCliente.Text = "🔍 Buscar Cliente";
+            // 
+            // lblCriterio
+            // 
+            this.lblCriterio.AutoSize = true;
+            this.lblCriterio.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+            this.lblCriterio.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(46)))), ((int)(((byte)(92)))), ((int)(((byte)(138)))));
+            this.lblCriterio.Location = new System.Drawing.Point(15, 70);
+            this.lblCriterio.Name = "lblCriterio";
+            this.lblCriterio.Size = new System.Drawing.Size(178, 25);
+            this.lblCriterio.TabIndex = 1;
+            this.lblCriterio.Text = "Nombre o Código:";
+            // 
+            // txtCriterio
+            // 
+            this.txtCriterio.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtCriterio.CharacterCasing = System.Windows.Forms.CharacterCasing.Upper;
+            this.txtCriterio.Font = new System.Drawing.Font("Segoe UI", 11F);
+            this.txtCriterio.Location = new System.Drawing.Point(185, 67);
+            this.txtCriterio.Name = "txtCriterio";
+            this.txtCriterio.Size = new System.Drawing.Size(770, 32);
+            this.txtCriterio.TabIndex = 2;
+            // 
+            // btnBuscarInline
+            // 
+            this.btnBuscarInline.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnBuscarInline.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(47)))), ((int)(((byte)(164)))), ((int)(((byte)(231)))));
+            this.btnBuscarInline.CornerRadius = 12;
+            this.btnBuscarInline.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnBuscarInline.FlatAppearance.BorderSize = 0;
+            this.btnBuscarInline.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnBuscarInline.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+            this.btnBuscarInline.ForeColor = System.Drawing.Color.White;
+            this.btnBuscarInline.Location = new System.Drawing.Point(970, 63);
+            this.btnBuscarInline.Name = "btnBuscarInline";
+            this.btnBuscarInline.Size = new System.Drawing.Size(170, 40);
+            this.btnBuscarInline.TabIndex = 3;
+            this.btnBuscarInline.Text = "🔍 Buscar";
+            this.btnBuscarInline.UseVisualStyleBackColor = false;
+            // 
             // emptyStatePanel
             // 
-            this.emptyStatePanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
+            this.emptyStatePanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.emptyStatePanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(244)))), ((int)(((byte)(247)))), ((int)(((byte)(251)))));
             this.emptyStatePanel.Controls.Add(this.lblSinDatos);
@@ -149,90 +240,12 @@ namespace PaintControl
             this.bottomPanel.Controls.Add(this.btnArticulos);
             this.bottomPanel.Controls.Add(this.btnVerClientes);
             this.bottomPanel.Controls.Add(this.btnTodosMovimientos);
-
             this.bottomPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.bottomPanel.Location = new System.Drawing.Point(0, 620);
             this.bottomPanel.Name = "bottomPanel";
             this.bottomPanel.Padding = new System.Windows.Forms.Padding(20, 12, 20, 12);
             this.bottomPanel.Size = new System.Drawing.Size(1200, 70);
             this.bottomPanel.TabIndex = 2;
-            // 
-            // searchPanel
-            // 
-            this.searchPanel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.searchPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(191)))), ((int)(((byte)(227)))), ((int)(((byte)(248)))));
-            this.searchPanel.Controls.Add(this.panelTituloSearch);
-            this.searchPanel.Controls.Add(this.lblCriterio);
-            this.searchPanel.Controls.Add(this.txtCriterio);
-            this.searchPanel.Controls.Add(this.btnBuscarInline);
-            this.searchPanel.CornerRadius = 20;
-            this.searchPanel.Location = new System.Drawing.Point(20, 15);
-            this.searchPanel.Name = "searchPanel";
-            this.searchPanel.Size = new System.Drawing.Size(1160, 120);
-            this.searchPanel.TabIndex = 0;
-            this.searchPanel.Paint += new System.Windows.Forms.PaintEventHandler(this.SearchPanel_Paint);
-            // 
-            // panelTituloSearch
-            // 
-            this.panelTituloSearch.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.panelTituloSearch.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(47)))), ((int)(((byte)(164)))), ((int)(((byte)(231)))));
-            this.panelTituloSearch.Controls.Add(this.lblBuscarCliente);
-            this.panelTituloSearch.Location = new System.Drawing.Point(0, 0);
-            this.panelTituloSearch.Name = "panelTituloSearch";
-            this.panelTituloSearch.Size = new System.Drawing.Size(1160, 50);
-            this.panelTituloSearch.TabIndex = 0;
-            // 
-            // lblBuscarCliente
-            // 
-            this.lblBuscarCliente.AutoSize = true;
-            this.lblBuscarCliente.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
-            this.lblBuscarCliente.ForeColor = System.Drawing.Color.White;
-            this.lblBuscarCliente.Location = new System.Drawing.Point(15, 10);
-            this.lblBuscarCliente.Name = "lblBuscarCliente";
-            this.lblBuscarCliente.Size = new System.Drawing.Size(217, 32);
-            this.lblBuscarCliente.TabIndex = 0;
-            this.lblBuscarCliente.Text = "🔍 Buscar Cliente";
-            // 
-            // lblCriterio
-            // 
-            this.lblCriterio.AutoSize = true;
-            this.lblCriterio.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
-            this.lblCriterio.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(46)))), ((int)(((byte)(92)))), ((int)(((byte)(138)))));
-            this.lblCriterio.Location = new System.Drawing.Point(15, 70);
-            this.lblCriterio.Name = "lblCriterio";
-            this.lblCriterio.Size = new System.Drawing.Size(178, 25);
-            this.lblCriterio.TabIndex = 1;
-            this.lblCriterio.Text = "Nombre o Código:";
-            // 
-            // txtCriterio
-            // 
-            this.txtCriterio.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtCriterio.CharacterCasing = System.Windows.Forms.CharacterCasing.Upper;
-            this.txtCriterio.Font = new System.Drawing.Font("Segoe UI", 11F);
-            this.txtCriterio.Location = new System.Drawing.Point(185, 67);
-            this.txtCriterio.Name = "txtCriterio";
-            this.txtCriterio.Size = new System.Drawing.Size(770, 32);
-            this.txtCriterio.TabIndex = 2;
-            // 
-            // btnBuscarInline
-            // 
-            this.btnBuscarInline.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnBuscarInline.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(47)))), ((int)(((byte)(164)))), ((int)(((byte)(231)))));
-            this.btnBuscarInline.CornerRadius = 12;
-            this.btnBuscarInline.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnBuscarInline.FlatAppearance.BorderSize = 0;
-            this.btnBuscarInline.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnBuscarInline.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
-            this.btnBuscarInline.ForeColor = System.Drawing.Color.White;
-            this.btnBuscarInline.Location = new System.Drawing.Point(970, 63);
-            this.btnBuscarInline.Name = "btnBuscarInline";
-            this.btnBuscarInline.Size = new System.Drawing.Size(170, 40);
-            this.btnBuscarInline.TabIndex = 3;
-            this.btnBuscarInline.Text = "🔍 Buscar";
-            this.btnBuscarInline.UseVisualStyleBackColor = false;
             // 
             // btnLimpiar
             // 
@@ -300,21 +313,6 @@ namespace PaintControl
             this.btnTodosMovimientos.TabIndex = 3;
             this.btnTodosMovimientos.Text = "📋 Movimientos (F8)";
             this.btnTodosMovimientos.UseVisualStyleBackColor = false;
-
-            // 
-            // lblHora
-            // 
-            this.lblHora.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblHora.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(47)))), ((int)(((byte)(164)))), ((int)(((byte)(231)))));
-            this.lblHora.CornerRadius = 12;
-            this.lblHora.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
-            this.lblHora.ForeColor = System.Drawing.Color.White;
-            this.lblHora.Location = new System.Drawing.Point(1050, 23);
-            this.lblHora.Name = "lblHora";
-            this.lblHora.Size = new System.Drawing.Size(140, 38);
-            this.lblHora.TabIndex = 1;
-            this.lblHora.Text = "11:50 AM";
-            this.lblHora.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // FormPrincipal
             // 
@@ -326,6 +324,7 @@ namespace PaintControl
             this.Controls.Add(this.bottomPanel);
             this.Controls.Add(this.headerPanel);
             this.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimumSize = new System.Drawing.Size(950, 600);
             this.Name = "FormPrincipal";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
@@ -334,12 +333,12 @@ namespace PaintControl
             this.headerPanel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.picLogo)).EndInit();
             this.mainPanel.ResumeLayout(false);
-            this.emptyStatePanel.ResumeLayout(false);
-            this.bottomPanel.ResumeLayout(false);
             this.searchPanel.ResumeLayout(false);
             this.searchPanel.PerformLayout();
             this.panelTituloSearch.ResumeLayout(false);
             this.panelTituloSearch.PerformLayout();
+            this.emptyStatePanel.ResumeLayout(false);
+            this.bottomPanel.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }

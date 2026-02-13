@@ -126,6 +126,22 @@ namespace PaintControl.Data
             }
         }
 
+        // Contar movimientos de un cliente
+        public int ContarMovimientos(int clienteId)
+        {
+            try
+            {
+                using (var context = new DOALDbContext())
+                {
+                    return context.Movimientos.Count(m => m.ClienteId == clienteId);
+                }
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
         // Eliminar cliente
         public bool EliminarCliente(int id)
         {

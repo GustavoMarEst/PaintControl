@@ -427,6 +427,40 @@ namespace PaintControl
                 ForeColor = Color.FromArgb(46, 92, 138)
             };
 
+            // Botón pequeño para editar nombre del cliente (posición fija junto a Agregar Compra)
+            Button btnEditarCliente = new Button
+            {
+                Name = "btnEditarCliente",
+                Text = "✏️ Editar",
+                Size = new Size(80, 32),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
+                BackColor = Color.FromArgb(74, 143, 208),
+                ForeColor = Color.White,
+                Anchor = ((AnchorStyles)((AnchorStyles.Top | AnchorStyles.Right)))
+            };
+            btnEditarCliente.FlatAppearance.BorderSize = 0;
+            btnEditarCliente.Location = new Point(anchoDisponible - 430, 13);
+            btnEditarCliente.Click += (s, e) => EditarNombreClienteActual();
+
+            // Botón para eliminar cliente (posición fija junto a Editar)
+            Button btnEliminarCliente = new Button
+            {
+                Name = "btnEliminarCliente",
+                Text = "🗑️ Eliminar",
+                Size = new Size(95, 32),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
+                BackColor = Color.FromArgb(220, 53, 69),
+                ForeColor = Color.White,
+                Anchor = ((AnchorStyles)((AnchorStyles.Top | AnchorStyles.Right)))
+            };
+            btnEliminarCliente.FlatAppearance.BorderSize = 0;
+            btnEliminarCliente.Location = new Point(anchoDisponible - 345, 13);
+            btnEliminarCliente.Click += (s, e) => EliminarClienteActual();
+
             // Crear controles de filtrado por fecha (dentro del panel de movimientos)
             lblFechaInicio = new Label
             {
@@ -613,6 +647,8 @@ namespace PaintControl
             dgvMovimientos.CellDoubleClick += DgvMovimientos_CellDoubleClick;
 
             panelMovimientos.Controls.Add(lblClienteInfo);
+            panelMovimientos.Controls.Add(btnEditarCliente);
+            panelMovimientos.Controls.Add(btnEliminarCliente);
             panelMovimientos.Controls.Add(lblFechaInicio);
             panelMovimientos.Controls.Add(dtpFechaInicio);
             panelMovimientos.Controls.Add(lblFechaFin);
@@ -753,6 +789,258 @@ namespace PaintControl
         }
 
 
+
+        // ===== ADMINISTRACIÓN DE CLIENTES =====
+
+        private void EditarNombreClienteActual()
+        {
+            if (clienteActual == null) return;
+
+            string nuevoNombre = MostrarInputDialog(
+                "Editar nombre del cliente",
+                "Nuevo nombre:",
+                clienteActual.Nombre);
+
+            if (nuevoNombre == null) return; // Canceló
+
+            nuevoNombre = nuevoNombre.Trim().ToUpper();
+            if (string.IsNullOrWhiteSpace(nuevoNombre))
+            {
+                MessageBox.Show("El nombre no puede estar vacío.",
+                    "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (nuevoNombre == clienteActual.Nombre)
+                return; // No cambió nada
+
+            var clienteModificado = new Cliente
+            {
+                Id = clienteActual.Id,
+                Codigo = clienteActual.Codigo,
+                Nombre = nuevoNombre
+            };
+
+            bool exito = clienteService.ActualizarCliente(clienteModificado);
+            if (exito)
+            {
+                clienteActual.Nombre = nuevoNombre;
+                MessageBox.Show("Nombre actualizado correctamente.",
+                    "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                CargarMovimientos();
+            }
+            else
+            {
+                MessageBox.Show("Error al actualizar el nombre del cliente.",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void EliminarClienteActual()
+        {
+            if (clienteActual == null) return;
+            EliminarClienteConConfirmacion(clienteActual, true);
+        }
+
+        private void EliminarClienteConConfirmacion(Cliente cliente, bool volverALimpiar)
+        {
+            int numMovimientos = clienteService.ContarMovimientos(cliente.Id);
+
+            // Primera confirmación
+            string mensaje = $"¿Está seguro que desea eliminar al cliente?\n\n" +
+                           $"Código: {cliente.Codigo}\n" +
+                           $"Nombre: {cliente.Nombre}\n\n";
+
+            if (numMovimientos > 0)
+            {
+                mensaje += $"⚠️ ATENCIÓN: Se eliminarán también {numMovimientos} movimiento(s) asociado(s).\n\n";
+            }
+
+            mensaje += "Esta acción NO se puede deshacer.";
+
+            var r1 = MessageBox.Show(mensaje,
+                "Confirmar Eliminación", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+            if (r1 != DialogResult.Yes) return;
+
+            // Segunda confirmación (doble confirmación)
+            string mensaje2 = $"⚠️ SEGUNDA CONFIRMACIÓN ⚠️\n\n" +
+                             $"¿Realmente desea eliminar a \"{cliente.Nombre}\"";
+
+            if (numMovimientos > 0)
+                mensaje2 += $" y sus {numMovimientos} movimiento(s)";
+
+            mensaje2 += "?\n\nEsta es la última oportunidad para cancelar.";
+
+            var r2 = MessageBox.Show(mensaje2,
+                "⚠️ Última Confirmación", MessageBoxButtons.YesNo, MessageBoxIcon.Stop);
+
+            if (r2 != DialogResult.Yes) return;
+
+            bool exito = clienteService.EliminarCliente(cliente.Id);
+
+            if (exito)
+            {
+                MessageBox.Show($"El cliente \"{cliente.Nombre}\" y todos sus datos fueron eliminados.",
+                    "Eliminado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                if (volverALimpiar && clienteActual != null && clienteActual.Id == cliente.Id)
+                {
+                    LimpiarFormulario();
+                }
+            }
+            else
+            {
+                MessageBox.Show("Error al eliminar el cliente.",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private string MostrarInputDialog(string titulo, string etiqueta, string valorInicial)
+        {
+            Form inputForm = new Form
+            {
+                Text = titulo,
+                Size = new Size(500, 200),
+                StartPosition = FormStartPosition.CenterParent,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false,
+                BackColor = Color.White
+            };
+
+            Label lbl = new Label
+            {
+                Text = etiqueta,
+                Font = new Font("Segoe UI", 11F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(46, 92, 138),
+                Location = new Point(20, 20),
+                AutoSize = true
+            };
+
+            TextBox txt = new TextBox
+            {
+                Text = valorInicial,
+                Font = new Font("Segoe UI", 12F),
+                Location = new Point(20, 52),
+                Size = new Size(440, 32),
+                CharacterCasing = CharacterCasing.Upper
+            };
+
+            Button btnOk = new Button
+            {
+                Text = "✔ Guardar",
+                DialogResult = DialogResult.OK,
+                Size = new Size(130, 38),
+                Location = new Point(200, 100),
+                BackColor = Color.FromArgb(56, 161, 105),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnOk.FlatAppearance.BorderSize = 0;
+
+            Button btnCancel = new Button
+            {
+                Text = "✕ Cancelar",
+                DialogResult = DialogResult.Cancel,
+                Size = new Size(130, 38),
+                Location = new Point(340, 100),
+                BackColor = Color.FromArgb(226, 232, 240),
+                ForeColor = Color.FromArgb(90, 101, 119),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnCancel.FlatAppearance.BorderSize = 0;
+
+            inputForm.Controls.AddRange(new Control[] { lbl, txt, btnOk, btnCancel });
+            inputForm.AcceptButton = btnOk;
+            inputForm.CancelButton = btnCancel;
+
+            txt.SelectAll();
+
+            if (inputForm.ShowDialog() == DialogResult.OK)
+                return txt.Text;
+            return null;
+        }
+
+        private void EditarClienteEnLista(DataGridView dgv, Form listaForm)
+        {
+            if (dgv.CurrentRow == null) return;
+            Cliente cliente = dgv.CurrentRow.Tag as Cliente;
+            if (cliente == null) return;
+
+            string nuevoNombre = MostrarInputDialog(
+                "Editar nombre del cliente",
+                "Nuevo nombre:",
+                cliente.Nombre);
+
+            if (nuevoNombre == null) return;
+
+            nuevoNombre = nuevoNombre.Trim().ToUpper();
+            if (string.IsNullOrWhiteSpace(nuevoNombre))
+            {
+                MessageBox.Show("El nombre no puede estar vacío.",
+                    "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (nuevoNombre == cliente.Nombre) return;
+
+            var clienteModificado = new Cliente
+            {
+                Id = cliente.Id,
+                Codigo = cliente.Codigo,
+                Nombre = nuevoNombre
+            };
+
+            bool exito = clienteService.ActualizarCliente(clienteModificado);
+            if (exito)
+            {
+                cliente.Nombre = nuevoNombre;
+                dgv.CurrentRow.Cells["Nombre"].Value = nuevoNombre;
+                dgv.CurrentRow.Tag = cliente;
+
+                // Actualizar también el panel de movimientos si es el mismo cliente
+                if (clienteActual != null && clienteActual.Id == cliente.Id)
+                {
+                    clienteActual.Nombre = nuevoNombre;
+                    CargarMovimientos();
+                }
+
+                MessageBox.Show("Nombre actualizado correctamente.",
+                    "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
+                MessageBox.Show("Error al actualizar el nombre.",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void EliminarClienteEnLista(DataGridView dgv, Form listaForm)
+        {
+            if (dgv.CurrentRow == null) return;
+            Cliente cliente = dgv.CurrentRow.Tag as Cliente;
+            if (cliente == null) return;
+
+            EliminarClienteConConfirmacion(cliente, false);
+
+            // Refrescar la lista si se eliminó
+            var clienteVerificar = clienteService.ObtenerPorId(cliente.Id);
+            if (clienteVerificar == null)
+            {
+                dgv.Rows.Remove(dgv.CurrentRow);
+
+                // Si era el cliente seleccionado, limpiar
+                if (clienteActual != null && clienteActual.Id == cliente.Id)
+                {
+                    LimpiarFormulario();
+                }
+            }
+        }
 
         private void MostrarListaClientes()
         {
@@ -956,8 +1244,57 @@ namespace PaintControl
                 }
             };
 
+            // ===== PANEL INFERIOR CON BOTONES DE ADMINISTRACIÓN =====
+            Panel bottomPanel2 = new Panel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 60,
+                BackColor = Color.FromArgb(232, 241, 248),
+                Padding = new Padding(15, 10, 15, 10)
+            };
+
+            Button btnEditarLista = new Button
+            {
+                Text = "✏️ Editar Nombre",
+                Size = new Size(170, 40),
+                Location = new Point(15, 10),
+                BackColor = Color.FromArgb(74, 143, 208),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnEditarLista.FlatAppearance.BorderSize = 0;
+            btnEditarLista.Click += (s, e) => EditarClienteEnLista(dgv, listaForm);
+
+            Button btnEliminarLista = new Button
+            {
+                Text = "🗑️ Eliminar Cliente",
+                Size = new Size(180, 40),
+                Location = new Point(195, 10),
+                BackColor = Color.FromArgb(220, 53, 69),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnEliminarLista.FlatAppearance.BorderSize = 0;
+            btnEliminarLista.Click += (s, e) => EliminarClienteEnLista(dgv, listaForm);
+
+            Label lblTip = new Label
+            {
+                Text = "Seleccione un cliente y use los botones, o doble clic para ver sus movimientos",
+                Font = new Font("Segoe UI", 9F, FontStyle.Italic),
+                ForeColor = Color.FromArgb(120, 130, 145),
+                AutoSize = true,
+                Location = new Point(390, 20)
+            };
+
+            bottomPanel2.Controls.AddRange(new Control[] { btnEditarLista, btnEliminarLista, lblTip });
+
             listaForm.BackColor = Color.FromArgb(244, 247, 251);
             listaForm.Controls.Add(dgv);
+            listaForm.Controls.Add(bottomPanel2);
             listaForm.Controls.Add(topPanel);
             listaForm.ShowDialog(this);
         }
