@@ -36,7 +36,8 @@ namespace PaintControl.Data
             }
         }
 
-        // Buscar por código o nombre
+        // Buscar por código o nombre (búsqueda flexible - encuentra "Martinez Perez Juan" buscando "Juan Martinez Perez")
+        // Solo devuelve resultados si TODAS las palabras coinciden. Si no hay coincidencia total, devuelve lista vacía.
         public List<Cliente> BuscarPorCodigoONombre(string criterio)
         {
             if (string.IsNullOrWhiteSpace(criterio))
@@ -44,11 +45,44 @@ namespace PaintControl.Data
 
             using (var context = new DOALDbContext())
             {
-                return context.Clientes
+                // Paso 1: Buscar coincidencia directa (código o nombre contiene el criterio completo)
+                var resultadosExactos = context.Clientes
                     .AsNoTracking()
                     .Where(c => c.Codigo.Contains(criterio) || c.Nombre.Contains(criterio))
                     .OrderBy(c => c.Nombre)
                     .ToList();
+
+                if (resultadosExactos.Count > 0)
+                    return resultadosExactos;
+
+                // Paso 2: Si el criterio tiene múltiples palabras, buscar en cualquier orden
+                // pero TODAS las palabras deben estar presentes en el nombre
+                string[] palabras = criterio.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+                if (palabras.Length <= 1)
+                    return new List<Cliente>(); // Una sola palabra sin resultado = no encontrado
+
+                // Capturar primera palabra en variable local (EF6 no soporta ArrayIndex en LINQ)
+                string primeraPalabra = palabras[0];
+
+                // Traer candidatos que contengan al menos la primera palabra
+                var candidatos = context.Clientes
+                    .AsNoTracking()
+                    .Where(c => c.Nombre.Contains(primeraPalabra))
+                    .ToList();
+
+                // Filtrar en memoria: el nombre DEBE contener TODAS las palabras buscadas
+                var resultadosFlexibles = candidatos
+                    .Where(c =>
+                    {
+                        string nombreUpper = c.Nombre.ToUpperInvariant();
+                        return palabras.All(p => nombreUpper.Contains(p.ToUpperInvariant()));
+                    })
+                    .OrderBy(c => c.Nombre)
+                    .ToList();
+
+                // Si no hay coincidencia total, devolver lista vacía (se ofrecerá crear cliente)
+                return resultadosFlexibles;
             }
         }
 

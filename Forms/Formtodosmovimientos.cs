@@ -172,6 +172,7 @@ namespace PaintControl.Forms
 
             dgvTodosMovimientos.Columns.Add("NumMov", "No. Movimiento");
             dgvTodosMovimientos.Columns.Add("Fecha", "Fecha");
+            dgvTodosMovimientos.Columns.Add("FechaUltCompra", "Últ. Compra");
             dgvTodosMovimientos.Columns.Add("Cliente", "Cliente");
             dgvTodosMovimientos.Columns.Add("Descripcion", "Descripción");
             dgvTodosMovimientos.Columns.Add("Cantidad", "Cantidad");
@@ -256,12 +257,13 @@ namespace PaintControl.Forms
                 }
             };
 
-            dgvTodosMovimientos.Columns["NumMov"].FillWeight = 80;
-            dgvTodosMovimientos.Columns["Fecha"].FillWeight = 80;
+            dgvTodosMovimientos.Columns["NumMov"].FillWeight = 60;
+            dgvTodosMovimientos.Columns["Fecha"].FillWeight = 70;
+            dgvTodosMovimientos.Columns["FechaUltCompra"].FillWeight = 70;
             dgvTodosMovimientos.Columns["Cliente"].FillWeight = 150;
             dgvTodosMovimientos.Columns["Descripcion"].FillWeight = 150;
-            dgvTodosMovimientos.Columns["Cantidad"].FillWeight = 70;
-            dgvTodosMovimientos.Columns["Total"].FillWeight = 80;
+            dgvTodosMovimientos.Columns["Cantidad"].FillWeight = 50;
+            dgvTodosMovimientos.Columns["Total"].FillWeight = 70;
 
             dgvTodosMovimientos.Columns["Cantidad"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             dgvTodosMovimientos.Columns["Total"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
@@ -284,6 +286,16 @@ namespace PaintControl.Forms
 
                     // Comparar por fecha real, no por el texto
                     e.SortResult = DateTime.Compare(mov1.Fecha, mov2.Fecha);
+                    e.Handled = true;
+                }
+                else if (e.Column.Name == "FechaUltCompra")
+                {
+                    Movimiento mov1 = dgvTodosMovimientos.Rows[e.RowIndex1].Tag as Movimiento;
+                    Movimiento mov2 = dgvTodosMovimientos.Rows[e.RowIndex2].Tag as Movimiento;
+
+                    DateTime fecha1 = mov1.FechaUltimaCompra ?? DateTime.MinValue;
+                    DateTime fecha2 = mov2.FechaUltimaCompra ?? DateTime.MinValue;
+                    e.SortResult = DateTime.Compare(fecha1, fecha2);
                     e.Handled = true;
                 }
                 else if (e.Column.Name == "NumMov")
@@ -394,6 +406,7 @@ namespace PaintControl.Forms
                 dgvTodosMovimientos.Rows.Add(
                     mov.NumeroMovimiento,
                     mov.Fecha.ToShortDateString(),
+                    mov.FechaUltimaCompra.HasValue ? mov.FechaUltimaCompra.Value.ToShortDateString() : "—",
                     nombreCliente,
                     mov.Descripcion,
                     mov.Cantidad,

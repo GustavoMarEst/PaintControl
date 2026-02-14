@@ -423,8 +423,11 @@ namespace PaintControl
                 Name = "lblClienteInfo",
                 Font = new Font("Segoe UI", 12F, FontStyle.Bold),
                 Location = new Point(15, 12),
-                AutoSize = true,
-                ForeColor = Color.FromArgb(46, 92, 138)
+                AutoSize = false,
+                AutoEllipsis = true,
+                Size = new Size(anchoDisponible - 460, 25),
+                ForeColor = Color.FromArgb(46, 92, 138),
+                Anchor = ((AnchorStyles)((AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right)))
             };
 
             // Botón pequeño para editar nombre del cliente (posición fija junto a Agregar Compra)
@@ -582,6 +585,7 @@ namespace PaintControl
 
             dgvMovimientos.Columns.Add("NumMov", "No. Mov.");
             dgvMovimientos.Columns.Add("Fecha", "Fecha");
+            dgvMovimientos.Columns.Add("FechaUltCompra", "Últ. Compra");
             dgvMovimientos.Columns.Add("Clave", "Clave Color");
             dgvMovimientos.Columns.Add("Descripcion", "Descripción");
             dgvMovimientos.Columns.Add("Base", "Base");
@@ -629,15 +633,16 @@ namespace PaintControl
                 col.SortMode = DataGridViewColumnSortMode.NotSortable;
             }
 
-            dgvMovimientos.Columns["NumMov"].FillWeight = 60;
-            dgvMovimientos.Columns["Fecha"].FillWeight = 70;
-            dgvMovimientos.Columns["Clave"].FillWeight = 80;
-            dgvMovimientos.Columns["Descripcion"].FillWeight = 150;
-            dgvMovimientos.Columns["Base"].FillWeight = 60;
-            dgvMovimientos.Columns["Unidad"].FillWeight = 60;
-            dgvMovimientos.Columns["Cantidad"].FillWeight = 60;
-            dgvMovimientos.Columns["Precio"].FillWeight = 70;
-            dgvMovimientos.Columns["Formula"].FillWeight = 120;
+            dgvMovimientos.Columns["NumMov"].FillWeight = 40;
+            dgvMovimientos.Columns["Fecha"].FillWeight = 60;
+            dgvMovimientos.Columns["FechaUltCompra"].FillWeight = 60;
+            dgvMovimientos.Columns["Clave"].FillWeight = 70;
+            dgvMovimientos.Columns["Descripcion"].FillWeight = 120;
+            dgvMovimientos.Columns["Base"].FillWeight = 40;
+            dgvMovimientos.Columns["Unidad"].FillWeight = 50;
+            dgvMovimientos.Columns["Cantidad"].FillWeight = 40;
+            dgvMovimientos.Columns["Precio"].FillWeight = 60;
+            dgvMovimientos.Columns["Formula"].FillWeight = 180;
 
             dgvMovimientos.Columns["Cantidad"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             dgvMovimientos.Columns["Precio"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
@@ -696,6 +701,7 @@ namespace PaintControl
                 dgvMovimientos.Rows.Add(
                     mov.NumeroMovimiento,
                     mov.Fecha.ToShortDateString(),
+                    mov.FechaUltimaCompra.HasValue ? mov.FechaUltimaCompra.Value.ToShortDateString() : "—",
                     mov.ClaveColor,
                     mov.Descripcion,
                     mov.Base,

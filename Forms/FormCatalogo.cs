@@ -487,20 +487,155 @@ namespace PaintControl.Forms
                 MessageBox.Show("Seleccione una l\u00ednea primero.", "Atenci\u00f3n", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            using (var f = CrearFormEdicion($"Agregar Acabado a \"{lineaSeleccionada.Nombre}\"", "", "", false))
+
+            // Crear formulario personalizado con checkbox "Universal"
+            Form form = new Form
             {
-                if (f.ShowDialog(this) == DialogResult.OK)
+                Text = $"Agregar Acabado a \"{lineaSeleccionada.Nombre}\"",
+                Size = new Size(420, 240),
+                StartPosition = FormStartPosition.CenterParent,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false,
+                BackColor = Color.White
+            };
+
+            int px = 18, yy = 15;
+            form.Controls.Add(new Label
+            {
+                Text = "Nombre:",
+                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                Location = new Point(px, yy),
+                AutoSize = true
+            });
+            TextBox txtN = new TextBox
+            {
+                Text = "",
+                Font = new Font("Segoe UI", 10F),
+                Location = new Point(px, yy + 22),
+                Width = 365,
+                CharacterCasing = CharacterCasing.Upper
+            };
+            form.Controls.Add(txtN);
+            yy += 55;
+
+            // Checkbox Universal
+            CheckBox chkUniversal = new CheckBox
+            {
+                Text = "Universal (agregar a todas las l\u00edneas del tipo)",
+                Font = new Font("Segoe UI", 9F),
+                Location = new Point(px, yy),
+                AutoSize = true,
+                ForeColor = AzulOscuro
+            };
+            form.Controls.Add(chkUniversal);
+            yy += 35;
+
+            Button bG = new Button
+            {
+                Text = "\u2713 Guardar",
+                Font = FuenteBoton,
+                Size = new Size(100, 35),
+                Location = new Point(px + 160, yy),
+                BackColor = VerdePrimario,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand
+            };
+            bG.FlatAppearance.BorderSize = 0;
+
+            Button bC = new Button
+            {
+                Text = "Cancelar",
+                Font = FuenteBoton,
+                Size = new Size(100, 35),
+                Location = new Point(px + 268, yy),
+                BackColor = GrisBotonSecundario,
+                ForeColor = Color.FromArgb(90, 101, 119),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand
+            };
+            bC.FlatAppearance.BorderSize = 0;
+
+            bG.Click += (s, e) =>
+            {
+                if (string.IsNullOrWhiteSpace(txtN.Text))
                 {
-                    string[] d = (f.Tag as string).Split('|');
+                    MessageBox.Show("El nombre es obligatorio.", "Validaci\u00f3n", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                form.Tag = new object[] { txtN.Text.Trim().ToUpper(), chkUniversal.Checked };
+                form.DialogResult = DialogResult.OK;
+                form.Close();
+            };
+
+            bC.Click += (s, e) =>
+            {
+                form.DialogResult = DialogResult.Cancel;
+                form.Close();
+            };
+
+            form.Controls.Add(bG);
+            form.Controls.Add(bC);
+            form.AcceptButton = bG;
+            form.CancelButton = bC;
+
+            if (form.ShowDialog(this) == DialogResult.OK)
+            {
+                object[] datos = form.Tag as object[];
+                string nombreAcabado = (string)datos[0];
+                bool esUniversal = (bool)datos[1];
+
+                if (esUniversal && tipoSeleccionado != null)
+                {
+                    // Obtener todas las líneas del tipo actual
+                    var todasLineas = catalogoService.ObtenerTodasLineasPorTipo(tipoSeleccionado.Id);
+                    int agregados = 0;
+                    int omitidos = 0;
+
+                    foreach (var linea in todasLineas)
+                    {
+                        // Verificar si ya existe ese acabado en esta línea
+                        var acabadosExistentes = catalogoService.ObtenerTodosAcabadosPorLinea(linea.Id);
+                        bool yaExiste = acabadosExistentes.Any(a =>
+                            a.Nombre.Equals(nombreAcabado, StringComparison.OrdinalIgnoreCase));
+
+                        if (!yaExiste)
+                        {
+                            catalogoService.AgregarAcabado(new AcabadoPintura
+                            {
+                                LineaPinturaId = linea.Id,
+                                Nombre = nombreAcabado,
+                                Activo = true
+                            });
+                            agregados++;
+                        }
+                        else
+                        {
+                            omitidos++;
+                        }
+                    }
+
+                    string msg = $"Acabado \"{nombreAcabado}\" procesado:\n\n" +
+                                 $"\u2713 Agregado a {agregados} l\u00ednea(s)\n" +
+                                 $"\u2014 Omitido en {omitidos} l\u00ednea(s) (ya exist\u00eda)";
+                    MessageBox.Show(msg, "Resultado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    CargarAcabados(lineaSeleccionada.Id);
+                }
+                else
+                {
+                    // Agregar solo a la línea seleccionada
                     if (catalogoService.AgregarAcabado(new AcabadoPintura
                     {
                         LineaPinturaId = lineaSeleccionada.Id,
-                        Nombre = d[0],
+                        Nombre = nombreAcabado,
                         Activo = true
                     }))
                         CargarAcabados(lineaSeleccionada.Id);
                 }
             }
+            form.Dispose();
         }
 
         private void EditarAcabado()

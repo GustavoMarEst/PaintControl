@@ -20,6 +20,8 @@ namespace PaintControl.Forms
 
         // Controles principales
         private DateTimePicker dtpFecha;
+        private DateTimePicker dtpFechaUltimaCompra;
+        private CheckBox chkFechaUltimaCompra;
         private TextBox txtClave;
         private TextBox txtBase;
         private ComboBox cmbUnidad;
@@ -44,6 +46,7 @@ namespace PaintControl.Forms
         private TextBox[] txtTipos = new TextBox[6];
         private TextBox[] txtValores1 = new TextBox[6];
         private TextBox[] txtValores2 = new TextBox[6];
+        private TextBox[] txtValores3 = new TextBox[6];
 
         // Colores
         private static readonly Color AzulPrimario = Color.FromArgb(47, 164, 231);
@@ -99,7 +102,7 @@ namespace PaintControl.Forms
         private void ConfigurarFormulario(bool permitirEdicion)
         {
             this.Text = $"Detalle de Movimiento #{movimiento.NumeroMovimiento}";
-            this.Size = new Size(720, 720);
+            this.Size = new Size(720, 780);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
@@ -116,7 +119,7 @@ namespace PaintControl.Forms
 
             // ===== SCROLL =====
             Panel scrollPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Color.White };
-            Panel body = new Panel { Location = new Point(0, 0), Size = new Size(700, 640), BackColor = Color.White };
+            Panel body = new Panel { Location = new Point(0, 0), Size = new Size(700, 710), BackColor = Color.White };
 
             int padX = 20, y = 15, fullWidth = 655, halfWidth = 317, gap = 20;
             int cardWidth = (fullWidth - gap * 2) / 3, cardHeight = 55;
@@ -125,10 +128,57 @@ namespace PaintControl.Forms
 
             string nombreCliente = movimiento.Cliente != null ? movimiento.Cliente.Nombre : "\u2014";
             body.Controls.Add(CrearInfoCard("N\u00ba MOVIMIENTO", movimiento.NumeroMovimiento.ToString(), padX, y, cardWidth, cardHeight));
-            body.Controls.Add(CrearInfoCard("FECHA", movimiento.Fecha.ToShortDateString(), padX + cardWidth + gap, y, cardWidth, cardHeight));
+
+            // Card de fecha editable con DateTimePicker integrado
+            Panel card2 = new Panel { Location = new Point(padX + cardWidth + gap, y), Size = new Size(cardWidth, cardHeight), BackColor = FondoTarjeta };
+            card2.Paint += (s, e) => { using (Pen p = new Pen(BordeTarjeta, 1)) using (GraphicsPath gp = CrearRR(new Rectangle(0, 0, card2.Width - 1, card2.Height - 1), 8)) { e.Graphics.SmoothingMode = SmoothingMode.AntiAlias; e.Graphics.DrawPath(p, gp); } };
+            card2.Controls.Add(new Label { Text = "FECHA", Font = FuenteInfoLabel, ForeColor = TextoSecundario, Location = new Point(10, 6), AutoSize = true });
+            dtpFecha = new DateTimePicker
+            {
+                Format = DateTimePickerFormat.Short,
+                Font = FuenteInfoValor,
+                Location = new Point(8, 24),
+                Size = new Size(cardWidth - 16, 25),
+                Value = movimiento.Fecha,
+                Enabled = false  // Se habilita en modo edición
+            };
+            card2.Controls.Add(dtpFecha);
+
+            body.Controls.Add(card2);
             body.Controls.Add(CrearInfoCard("CLIENTE", nombreCliente, padX + (cardWidth + gap) * 2, y, cardWidth, cardHeight));
-            body.Controls.Add(dtpFecha);
-            y += cardHeight + 15;
+            y += cardHeight + 10;
+
+            // ===== FECHA DE ÚLTIMA COMPRA =====
+            chkFechaUltimaCompra = new CheckBox
+            {
+                Text = "Fecha de última compra (recompra):",
+                Font = FuenteFieldLabel,
+                ForeColor = TextoLabel,
+                Location = new Point(padX, y),
+                AutoSize = true,
+                Checked = movimiento.FechaUltimaCompra.HasValue,
+                Enabled = false  // Se habilita en modo edición
+            };
+            body.Controls.Add(chkFechaUltimaCompra);
+
+            dtpFechaUltimaCompra = new DateTimePicker
+            {
+                Format = DateTimePickerFormat.Short,
+                Font = FuenteInput,
+                Location = new Point(padX + 300, y - 2),
+                Size = new Size(150, 25),
+                Enabled = false,
+                Value = movimiento.FechaUltimaCompra ?? DateTime.Now
+            };
+            body.Controls.Add(dtpFechaUltimaCompra);
+
+            chkFechaUltimaCompra.CheckedChanged += (s, e) =>
+            {
+                if (modoEdicion)
+                    dtpFechaUltimaCompra.Enabled = chkFechaUltimaCompra.Checked;
+            };
+
+            y += 30;
 
             // ===== DATOS DEL PRODUCTO =====
             body.Controls.Add(CrearSeccionTitulo("DATOS DEL PRODUCTO", padX, y, fullWidth));
@@ -335,6 +385,18 @@ namespace PaintControl.Forms
             lblTotalValor.Location = new Point(lblTotalValor.Parent.Width - lblTotalValor.PreferredWidth - 12, 8);
 
             CargarFormula(movimiento.Formula);
+
+            // Cargar fecha de última compra
+            if (movimiento.FechaUltimaCompra.HasValue)
+            {
+                chkFechaUltimaCompra.Checked = true;
+                dtpFechaUltimaCompra.Value = movimiento.FechaUltimaCompra.Value;
+            }
+            else
+            {
+                chkFechaUltimaCompra.Checked = false;
+                dtpFechaUltimaCompra.Value = DateTime.Now;
+            }
         }
 
         private void CargarFormula(string formula)
@@ -349,6 +411,7 @@ namespace PaintControl.Forms
                 if (txtTipos[i] != null) txtTipos[i].Text = partes[0].Trim();
                 if (valores.Length > 0 && txtValores1[i] != null) txtValores1[i].Text = valores[0];
                 if (valores.Length > 1 && txtValores2[i] != null) txtValores2[i].Text = valores[1];
+                if (valores.Length > 2 && txtValores3[i] != null) txtValores3[i].Text = valores[2];
             }
         }
 
@@ -361,6 +424,8 @@ namespace PaintControl.Forms
                 string f = $"{txtTipos[i].Text.Trim()} = {txtValores1[i].Text.Trim()}";
                 if (txtValores2[i] != null && !string.IsNullOrWhiteSpace(txtValores2[i].Text))
                     f += $" {txtValores2[i].Text.Trim()}";
+                if (txtValores3[i] != null && !string.IsNullOrWhiteSpace(txtValores3[i].Text))
+                    f += $" {txtValores3[i].Text.Trim()}";
                 formulas.Add(f);
             }
             return string.Join("|", formulas);
@@ -378,6 +443,10 @@ namespace PaintControl.Forms
             numCantidad.ReadOnly = false;
             numPrecio.ReadOnly = false;
 
+            // Habilitar fecha de última compra
+            chkFechaUltimaCompra.Enabled = true;
+            dtpFechaUltimaCompra.Enabled = chkFechaUltimaCompra.Checked;
+
             // Habilitar catálogo
             cmbTipoPintura.Enabled = true;
             cmbTipoPintura.Items.Clear();
@@ -390,6 +459,7 @@ namespace PaintControl.Forms
                 if (txtTipos[i] != null) txtTipos[i].ReadOnly = false;
                 if (txtValores1[i] != null) txtValores1[i].ReadOnly = false;
                 if (txtValores2[i] != null) txtValores2[i].ReadOnly = false;
+                if (txtValores3[i] != null) txtValores3[i].ReadOnly = false;
             }
 
             btnEditar.Visible = false; btnEliminar.Visible = false;
@@ -406,6 +476,8 @@ namespace PaintControl.Forms
             cmbUnidad.Enabled = false;
             numCantidad.ReadOnly = true;
             numPrecio.ReadOnly = true;
+            chkFechaUltimaCompra.Enabled = false;
+            dtpFechaUltimaCompra.Enabled = false;
             cmbTipoPintura.Enabled = false;
             cmbLineaPintura.Enabled = false;
             cmbAcabado.Enabled = false;
@@ -418,6 +490,7 @@ namespace PaintControl.Forms
                 if (txtTipos[i] != null) txtTipos[i].ReadOnly = true;
                 if (txtValores1[i] != null) txtValores1[i].ReadOnly = true;
                 if (txtValores2[i] != null) txtValores2[i].ReadOnly = true;
+                if (txtValores3[i] != null) txtValores3[i].ReadOnly = true;
             }
 
             btnEditar.Visible = true; btnEliminar.Visible = true;
@@ -451,7 +524,8 @@ namespace PaintControl.Forms
                 Unidad = cmbUnidad.SelectedItem?.ToString() ?? movimiento.Unidad,
                 Cantidad = numCantidad.Value,
                 Precio = numPrecio.Value,
-                Formula = ObtenerFormula()
+                Formula = ObtenerFormula(),
+                FechaUltimaCompra = chkFechaUltimaCompra.Checked ? (DateTime?)dtpFechaUltimaCompra.Value : null
             };
 
             Modificado = true;
@@ -501,22 +575,43 @@ namespace PaintControl.Forms
 
         private TableLayoutPanel CrearPanelFormulas(int x, int y, int width, bool readOnly)
         {
-            TableLayoutPanel panel = new TableLayoutPanel { Location = new Point(x, y), Width = width, Height = 110, BackColor = FondoFormula, ColumnCount = 2, RowCount = 3, CellBorderStyle = TableLayoutPanelCellBorderStyle.None, Padding = new Padding(8, 5, 8, 5) };
+            int panelHeight = 140;
+            TableLayoutPanel panel = new TableLayoutPanel { Location = new Point(x, y), Width = width, Height = panelHeight, BackColor = FondoFormula, ColumnCount = 2, RowCount = 4, CellBorderStyle = TableLayoutPanelCellBorderStyle.None, Padding = new Padding(8, 5, 8, 5) };
             panel.Paint += (s, e) => { using (Pen p = new Pen(BordeTarjeta, 1)) using (GraphicsPath gp = CrearRR(new Rectangle(0, 0, panel.Width - 1, panel.Height - 1), 8)) { e.Graphics.SmoothingMode = SmoothingMode.AntiAlias; e.Graphics.DrawPath(p, gp); } };
             panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 22F));
             for (int i = 0; i < 3; i++) panel.RowStyles.Add(new RowStyle(SizeType.Percent, 33.33F));
+
+            // Headers para ambas columnas
+            for (int col = 0; col < 2; col++)
+            {
+                FlowLayoutPanel headerFlow = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, WrapContents = false, BackColor = FondoFormula };
+                Font headerFont = new Font("Segoe UI", 7.5F, FontStyle.Bold);
+                Color headerColor = Color.FromArgb(100, 116, 139);
+                // Anchos y márgenes EXACTOS a los TextBox de abajo
+                headerFlow.Controls.Add(new Label { Text = "Tinta", Font = headerFont, ForeColor = headerColor, AutoSize = false, Size = new Size(50, 16), TextAlign = ContentAlignment.MiddleCenter, Margin = new Padding(0) });
+                headerFlow.Controls.Add(new Label { Text = "", Font = headerFont, ForeColor = headerColor, AutoSize = false, Size = new Size(18, 16), Margin = new Padding(0) });
+                headerFlow.Controls.Add(new Label { Text = "Onzas", Font = headerFont, ForeColor = headerColor, AutoSize = false, Size = new Size(42, 16), TextAlign = ContentAlignment.MiddleCenter, Margin = new Padding(0, 0, 2, 0) });
+                headerFlow.Controls.Add(new Label { Text = "16vos", Font = headerFont, ForeColor = headerColor, AutoSize = false, Size = new Size(42, 16), TextAlign = ContentAlignment.MiddleCenter, Margin = new Padding(0, 0, 2, 0) });
+                headerFlow.Controls.Add(new Label { Text = "128vos", Font = headerFont, ForeColor = headerColor, AutoSize = false, Size = new Size(42, 16), TextAlign = ContentAlignment.MiddleCenter, Margin = new Padding(0) });
+                Panel headerPanel2 = new Panel { Dock = DockStyle.Fill, Margin = new Padding(2, 0, 2, 0), BackColor = FondoFormula };
+                headerPanel2.Controls.Add(headerFlow);
+                headerPanel2.Resize += (s, e) => { headerFlow.Location = new Point(Math.Max(0, (headerPanel2.Width - headerFlow.Width) / 2), 0); };
+                panel.Controls.Add(headerPanel2, col, 0);
+            }
 
             for (int i = 0; i < 6; i++)
             {
-                int col = i / 3, row = i % 3;
+                int col = i / 3, row = (i % 3) + 1;
                 Panel fp = new Panel { Dock = DockStyle.Fill, Margin = new Padding(2), BackColor = FondoFormula };
                 FlowLayoutPanel fl = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, WrapContents = false };
                 txtTipos[i] = new TextBox { Width = 50, Font = FuenteFormula, TextAlign = HorizontalAlignment.Center, CharacterCasing = CharacterCasing.Upper, BorderStyle = BorderStyle.FixedSingle, ReadOnly = readOnly, Margin = new Padding(0) };
-                Label eq = new Label { Text = "=", Font = FuenteIgual, ForeColor = Color.FromArgb(160, 174, 192), AutoSize = true, Margin = new Padding(4, 0, 4, 0) };
-                txtValores1[i] = new TextBox { Width = 50, Font = FuenteFormula, TextAlign = HorizontalAlignment.Center, BorderStyle = BorderStyle.FixedSingle, ReadOnly = readOnly, Margin = new Padding(0, 0, 4, 0) };
-                txtValores2[i] = new TextBox { Width = 50, Font = FuenteFormula, TextAlign = HorizontalAlignment.Center, BorderStyle = BorderStyle.FixedSingle, ReadOnly = readOnly, Margin = new Padding(0) };
-                fl.Controls.AddRange(new Control[] { txtTipos[i], eq, txtValores1[i], txtValores2[i] });
+                Label eq = new Label { Text = "=", Font = FuenteIgual, ForeColor = Color.FromArgb(160, 174, 192), AutoSize = true, Margin = new Padding(2, 0, 2, 0) };
+                txtValores1[i] = new TextBox { Width = 42, Font = FuenteFormula, TextAlign = HorizontalAlignment.Center, BorderStyle = BorderStyle.FixedSingle, ReadOnly = readOnly, Margin = new Padding(0, 0, 2, 0) };
+                txtValores2[i] = new TextBox { Width = 42, Font = FuenteFormula, TextAlign = HorizontalAlignment.Center, BorderStyle = BorderStyle.FixedSingle, ReadOnly = readOnly, Margin = new Padding(0, 0, 2, 0) };
+                txtValores3[i] = new TextBox { Width = 42, Font = FuenteFormula, TextAlign = HorizontalAlignment.Center, BorderStyle = BorderStyle.FixedSingle, ReadOnly = readOnly, Margin = new Padding(0) };
+                fl.Controls.AddRange(new Control[] { txtTipos[i], eq, txtValores1[i], txtValores2[i], txtValores3[i] });
                 fp.Controls.Add(fl);
                 fp.Resize += (s, e) => { fl.Location = new Point(Math.Max(0, (fp.Width - fl.Width) / 2), Math.Max(0, (fp.Height - fl.Height) / 2)); };
                 panel.Controls.Add(fp, col, row);

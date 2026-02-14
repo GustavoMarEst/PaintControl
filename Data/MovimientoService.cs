@@ -51,7 +51,7 @@ namespace PaintControl.Data
             }
         }
 
-        // Obtener por cliente y fechas
+        // Obtener por cliente y fechas (busca en Fecha y FechaUltimaCompra)
         public List<Movimiento> ObtenerPorClienteYFechas(int clienteId, DateTime fechaInicio, DateTime fechaFin)
         {
             using (var context = new DOALDbContext())
@@ -59,8 +59,8 @@ namespace PaintControl.Data
                 return context.Movimientos
                     .AsNoTracking()
                     .Where(m => m.ClienteId == clienteId &&
-                               m.Fecha >= fechaInicio &&
-                               m.Fecha <= fechaFin)
+                               ((m.Fecha >= fechaInicio && m.Fecha <= fechaFin) ||
+                                (m.FechaUltimaCompra.HasValue && m.FechaUltimaCompra >= fechaInicio && m.FechaUltimaCompra <= fechaFin)))
                     .OrderByDescending(m => m.Fecha)
                     .ToList();
             }
@@ -109,6 +109,7 @@ namespace PaintControl.Data
                     movimientoExistente.Cantidad = movimiento.Cantidad;
                     movimientoExistente.Precio = movimiento.Precio;
                     movimientoExistente.Formula = movimiento.Formula;
+                    movimientoExistente.FechaUltimaCompra = movimiento.FechaUltimaCompra;
 
                     context.SaveChanges();
                     return true;
@@ -156,14 +157,16 @@ namespace PaintControl.Data
             }
         }
 
-        // Obtener todos por fechas
+        // Obtener todos por fechas (busca en Fecha y FechaUltimaCompra)
         public List<Movimiento> ObtenerTodosPorFechas(DateTime fechaInicio, DateTime fechaFin)
         {
             using (var context = new DOALDbContext())
             {
                 return context.Movimientos
                     .AsNoTracking()
-                    .Where(m => m.Fecha >= fechaInicio && m.Fecha <= fechaFin)
+                    .Include(m => m.Cliente)
+                    .Where(m => (m.Fecha >= fechaInicio && m.Fecha <= fechaFin) ||
+                                (m.FechaUltimaCompra.HasValue && m.FechaUltimaCompra >= fechaInicio && m.FechaUltimaCompra <= fechaFin))
                     .OrderByDescending(m => m.Fecha)
                     .ToList();
             }

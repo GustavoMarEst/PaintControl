@@ -39,6 +39,9 @@ namespace PaintControl.Models
         [MaxLength(500)]
         public string Formula { get; set; }
 
+        // Fecha de última adquisición (cuando el cliente volvió a comprar la misma pintura)
+        public DateTime? FechaUltimaCompra { get; set; }
+
         // Relación con Cliente
         [ForeignKey("ClienteId")]
         public virtual Cliente Cliente { get; set; }
