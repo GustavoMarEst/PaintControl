@@ -13,38 +13,47 @@ namespace PaintControl.Data
 
         public List<TipoPintura> ObtenerTiposActivos()
         {
-            using (var context = new DOALDbContext())
+            return ConnectionHelper.EjecutarConReintento(() =>
             {
-                return context.TiposPintura
-                    .AsNoTracking()
-                    .Where(t => t.Activo)
-                    .OrderBy(t => t.Nombre)
-                    .ToList();
-            }
+                using (var context = new DOALDbContext())
+                {
+                    return context.TiposPintura
+                        .AsNoTracking()
+                        .Where(t => t.Activo)
+                        .OrderBy(t => t.Nombre)
+                        .ToList();
+                }
+            });
         }
 
         public List<TipoPintura> ObtenerTodosTipos()
         {
-            using (var context = new DOALDbContext())
+            return ConnectionHelper.EjecutarConReintento(() =>
             {
-                return context.TiposPintura
-                    .AsNoTracking()
-                    .Include(t => t.Lineas)
-                    .OrderBy(t => t.Nombre)
-                    .ToList();
-            }
+                using (var context = new DOALDbContext())
+                {
+                    return context.TiposPintura
+                        .AsNoTracking()
+                        .Include(t => t.Lineas)
+                        .OrderBy(t => t.Nombre)
+                        .ToList();
+                }
+            });
         }
 
         public bool AgregarTipo(TipoPintura tipo)
         {
             try
             {
-                using (var context = new DOALDbContext())
+                return ConnectionHelper.EjecutarConReintento(() =>
                 {
-                    context.TiposPintura.Add(tipo);
-                    context.SaveChanges();
-                    return true;
-                }
+                    using (var context = new DOALDbContext())
+                    {
+                        context.TiposPintura.Add(tipo);
+                        context.SaveChanges();
+                        return true;
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -57,17 +66,20 @@ namespace PaintControl.Data
         {
             try
             {
-                using (var context = new DOALDbContext())
+                return ConnectionHelper.EjecutarConReintento(() =>
                 {
-                    var existente = context.TiposPintura.Find(tipo.Id);
-                    if (existente == null) return false;
+                    using (var context = new DOALDbContext())
+                    {
+                        var existente = context.TiposPintura.Find(tipo.Id);
+                        if (existente == null) return false;
 
-                    existente.Nombre = tipo.Nombre;
-                    existente.Abreviatura = tipo.Abreviatura;
-                    existente.Activo = tipo.Activo;
-                    context.SaveChanges();
-                    return true;
-                }
+                        existente.Nombre = tipo.Nombre;
+                        existente.Abreviatura = tipo.Abreviatura;
+                        existente.Activo = tipo.Activo;
+                        context.SaveChanges();
+                        return true;
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -80,26 +92,29 @@ namespace PaintControl.Data
         {
             try
             {
-                using (var context = new DOALDbContext())
+                return ConnectionHelper.EjecutarConReintento(() =>
                 {
-                    var tipo = context.TiposPintura
-                        .Include(t => t.Lineas.Select(l => l.Acabados))
-                        .FirstOrDefault(t => t.Id == id);
-                    if (tipo == null) return false;
-
-                    // Eliminar en cascada: acabados -> líneas -> tipo
-                    foreach (var linea in tipo.Lineas.ToList())
+                    using (var context = new DOALDbContext())
                     {
-                        foreach (var acabado in linea.Acabados.ToList())
+                        var tipo = context.TiposPintura
+                            .Include(t => t.Lineas.Select(l => l.Acabados))
+                            .FirstOrDefault(t => t.Id == id);
+                        if (tipo == null) return false;
+
+                        // Eliminar en cascada: acabados -> líneas -> tipo
+                        foreach (var linea in tipo.Lineas.ToList())
                         {
-                            context.AcabadosPintura.Remove(acabado);
+                            foreach (var acabado in linea.Acabados.ToList())
+                            {
+                                context.AcabadosPintura.Remove(acabado);
+                            }
+                            context.LineasPintura.Remove(linea);
                         }
-                        context.LineasPintura.Remove(linea);
+                        context.TiposPintura.Remove(tipo);
+                        context.SaveChanges();
+                        return true;
                     }
-                    context.TiposPintura.Remove(tipo);
-                    context.SaveChanges();
-                    return true;
-                }
+                });
             }
             catch (Exception ex)
             {
@@ -112,39 +127,48 @@ namespace PaintControl.Data
 
         public List<LineaPintura> ObtenerLineasPorTipo(int tipoPinturaId)
         {
-            using (var context = new DOALDbContext())
+            return ConnectionHelper.EjecutarConReintento(() =>
             {
-                return context.LineasPintura
-                    .AsNoTracking()
-                    .Where(l => l.TipoPinturaId == tipoPinturaId && l.Activo)
-                    .OrderBy(l => l.Nombre)
-                    .ToList();
-            }
+                using (var context = new DOALDbContext())
+                {
+                    return context.LineasPintura
+                        .AsNoTracking()
+                        .Where(l => l.TipoPinturaId == tipoPinturaId && l.Activo)
+                        .OrderBy(l => l.Nombre)
+                        .ToList();
+                }
+            });
         }
 
         public List<LineaPintura> ObtenerTodasLineasPorTipo(int tipoPinturaId)
         {
-            using (var context = new DOALDbContext())
+            return ConnectionHelper.EjecutarConReintento(() =>
             {
-                return context.LineasPintura
-                    .AsNoTracking()
-                    .Include(l => l.Acabados)
-                    .Where(l => l.TipoPinturaId == tipoPinturaId)
-                    .OrderBy(l => l.Nombre)
-                    .ToList();
-            }
+                using (var context = new DOALDbContext())
+                {
+                    return context.LineasPintura
+                        .AsNoTracking()
+                        .Include(l => l.Acabados)
+                        .Where(l => l.TipoPinturaId == tipoPinturaId)
+                        .OrderBy(l => l.Nombre)
+                        .ToList();
+                }
+            });
         }
 
         public bool AgregarLinea(LineaPintura linea)
         {
             try
             {
-                using (var context = new DOALDbContext())
+                return ConnectionHelper.EjecutarConReintento(() =>
                 {
-                    context.LineasPintura.Add(linea);
-                    context.SaveChanges();
-                    return true;
-                }
+                    using (var context = new DOALDbContext())
+                    {
+                        context.LineasPintura.Add(linea);
+                        context.SaveChanges();
+                        return true;
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -157,17 +181,20 @@ namespace PaintControl.Data
         {
             try
             {
-                using (var context = new DOALDbContext())
+                return ConnectionHelper.EjecutarConReintento(() =>
                 {
-                    var existente = context.LineasPintura.Find(linea.Id);
-                    if (existente == null) return false;
+                    using (var context = new DOALDbContext())
+                    {
+                        var existente = context.LineasPintura.Find(linea.Id);
+                        if (existente == null) return false;
 
-                    existente.Nombre = linea.Nombre;
-                    existente.Abreviatura = linea.Abreviatura;
-                    existente.Activo = linea.Activo;
-                    context.SaveChanges();
-                    return true;
-                }
+                        existente.Nombre = linea.Nombre;
+                        existente.Abreviatura = linea.Abreviatura;
+                        existente.Activo = linea.Activo;
+                        context.SaveChanges();
+                        return true;
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -180,21 +207,24 @@ namespace PaintControl.Data
         {
             try
             {
-                using (var context = new DOALDbContext())
+                return ConnectionHelper.EjecutarConReintento(() =>
                 {
-                    var linea = context.LineasPintura
-                        .Include(l => l.Acabados)
-                        .FirstOrDefault(l => l.Id == id);
-                    if (linea == null) return false;
-
-                    foreach (var acabado in linea.Acabados.ToList())
+                    using (var context = new DOALDbContext())
                     {
-                        context.AcabadosPintura.Remove(acabado);
+                        var linea = context.LineasPintura
+                            .Include(l => l.Acabados)
+                            .FirstOrDefault(l => l.Id == id);
+                        if (linea == null) return false;
+
+                        foreach (var acabado in linea.Acabados.ToList())
+                        {
+                            context.AcabadosPintura.Remove(acabado);
+                        }
+                        context.LineasPintura.Remove(linea);
+                        context.SaveChanges();
+                        return true;
                     }
-                    context.LineasPintura.Remove(linea);
-                    context.SaveChanges();
-                    return true;
-                }
+                });
             }
             catch (Exception ex)
             {
@@ -207,38 +237,47 @@ namespace PaintControl.Data
 
         public List<AcabadoPintura> ObtenerAcabadosPorLinea(int lineaPinturaId)
         {
-            using (var context = new DOALDbContext())
+            return ConnectionHelper.EjecutarConReintento(() =>
             {
-                return context.AcabadosPintura
-                    .AsNoTracking()
-                    .Where(a => a.LineaPinturaId == lineaPinturaId && a.Activo)
-                    .OrderBy(a => a.Nombre)
-                    .ToList();
-            }
+                using (var context = new DOALDbContext())
+                {
+                    return context.AcabadosPintura
+                        .AsNoTracking()
+                        .Where(a => a.LineaPinturaId == lineaPinturaId && a.Activo)
+                        .OrderBy(a => a.Nombre)
+                        .ToList();
+                }
+            });
         }
 
         public List<AcabadoPintura> ObtenerTodosAcabadosPorLinea(int lineaPinturaId)
         {
-            using (var context = new DOALDbContext())
+            return ConnectionHelper.EjecutarConReintento(() =>
             {
-                return context.AcabadosPintura
-                    .AsNoTracking()
-                    .Where(a => a.LineaPinturaId == lineaPinturaId)
-                    .OrderBy(a => a.Nombre)
-                    .ToList();
-            }
+                using (var context = new DOALDbContext())
+                {
+                    return context.AcabadosPintura
+                        .AsNoTracking()
+                        .Where(a => a.LineaPinturaId == lineaPinturaId)
+                        .OrderBy(a => a.Nombre)
+                        .ToList();
+                }
+            });
         }
 
         public bool AgregarAcabado(AcabadoPintura acabado)
         {
             try
             {
-                using (var context = new DOALDbContext())
+                return ConnectionHelper.EjecutarConReintento(() =>
                 {
-                    context.AcabadosPintura.Add(acabado);
-                    context.SaveChanges();
-                    return true;
-                }
+                    using (var context = new DOALDbContext())
+                    {
+                        context.AcabadosPintura.Add(acabado);
+                        context.SaveChanges();
+                        return true;
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -251,16 +290,19 @@ namespace PaintControl.Data
         {
             try
             {
-                using (var context = new DOALDbContext())
+                return ConnectionHelper.EjecutarConReintento(() =>
                 {
-                    var existente = context.AcabadosPintura.Find(acabado.Id);
-                    if (existente == null) return false;
+                    using (var context = new DOALDbContext())
+                    {
+                        var existente = context.AcabadosPintura.Find(acabado.Id);
+                        if (existente == null) return false;
 
-                    existente.Nombre = acabado.Nombre;
-                    existente.Activo = acabado.Activo;
-                    context.SaveChanges();
-                    return true;
-                }
+                        existente.Nombre = acabado.Nombre;
+                        existente.Activo = acabado.Activo;
+                        context.SaveChanges();
+                        return true;
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -273,15 +315,18 @@ namespace PaintControl.Data
         {
             try
             {
-                using (var context = new DOALDbContext())
+                return ConnectionHelper.EjecutarConReintento(() =>
                 {
-                    var acabado = context.AcabadosPintura.Find(id);
-                    if (acabado == null) return false;
+                    using (var context = new DOALDbContext())
+                    {
+                        var acabado = context.AcabadosPintura.Find(id);
+                        if (acabado == null) return false;
 
-                    context.AcabadosPintura.Remove(acabado);
-                    context.SaveChanges();
-                    return true;
-                }
+                        context.AcabadosPintura.Remove(acabado);
+                        context.SaveChanges();
+                        return true;
+                    }
+                });
             }
             catch (Exception ex)
             {

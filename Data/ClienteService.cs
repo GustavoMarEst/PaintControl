@@ -15,25 +15,31 @@ namespace PaintControl.Data
             if (string.IsNullOrWhiteSpace(nombre))
                 return new List<Cliente>();
 
-            using (var context = new DOALDbContext())
+            return ConnectionHelper.EjecutarConReintento(() =>
             {
-                return context.Clientes
-                    .AsNoTracking()
-                    .Where(c => c.Nombre.Contains(nombre))
-                    .OrderBy(c => c.Nombre)
-                    .ToList();
-            }
+                using (var context = new DOALDbContext())
+                {
+                    return context.Clientes
+                        .AsNoTracking()
+                        .Where(c => c.Nombre.Contains(nombre))
+                        .OrderBy(c => c.Nombre)
+                        .ToList();
+                }
+            });
         }
 
         // Buscar por código
         public Cliente BuscarPorCodigo(string codigo)
         {
-            using (var context = new DOALDbContext())
+            return ConnectionHelper.EjecutarConReintento(() =>
             {
-                return context.Clientes
-                    .AsNoTracking()
-                    .FirstOrDefault(c => c.Codigo == codigo);
-            }
+                using (var context = new DOALDbContext())
+                {
+                    return context.Clientes
+                        .AsNoTracking()
+                        .FirstOrDefault(c => c.Codigo == codigo);
+                }
+            });
         }
 
         // Buscar por código o nombre (búsqueda flexible - encuentra "Martinez Perez Juan" buscando "Juan Martinez Perez")
@@ -43,68 +49,77 @@ namespace PaintControl.Data
             if (string.IsNullOrWhiteSpace(criterio))
                 return new List<Cliente>();
 
-            using (var context = new DOALDbContext())
+            return ConnectionHelper.EjecutarConReintento(() =>
             {
-                // Paso 1: Buscar coincidencia directa (código o nombre contiene el criterio completo)
-                var resultadosExactos = context.Clientes
-                    .AsNoTracking()
-                    .Where(c => c.Codigo.Contains(criterio) || c.Nombre.Contains(criterio))
-                    .OrderBy(c => c.Nombre)
-                    .ToList();
+                using (var context = new DOALDbContext())
+                {
+                    // Paso 1: Buscar coincidencia directa (código o nombre contiene el criterio completo)
+                    var resultadosExactos = context.Clientes
+                        .AsNoTracking()
+                        .Where(c => c.Codigo.Contains(criterio) || c.Nombre.Contains(criterio))
+                        .OrderBy(c => c.Nombre)
+                        .ToList();
 
-                if (resultadosExactos.Count > 0)
-                    return resultadosExactos;
+                    if (resultadosExactos.Count > 0)
+                        return resultadosExactos;
 
-                // Paso 2: Si el criterio tiene múltiples palabras, buscar en cualquier orden
-                // pero TODAS las palabras deben estar presentes en el nombre
-                string[] palabras = criterio.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    // Paso 2: Si el criterio tiene múltiples palabras, buscar en cualquier orden
+                    // pero TODAS las palabras deben estar presentes en el nombre
+                    string[] palabras = criterio.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-                if (palabras.Length <= 1)
-                    return new List<Cliente>(); // Una sola palabra sin resultado = no encontrado
+                    if (palabras.Length <= 1)
+                        return new List<Cliente>(); // Una sola palabra sin resultado = no encontrado
 
-                // Capturar primera palabra en variable local (EF6 no soporta ArrayIndex en LINQ)
-                string primeraPalabra = palabras[0];
+                    // Capturar primera palabra en variable local (EF6 no soporta ArrayIndex en LINQ)
+                    string primeraPalabra = palabras[0];
 
-                // Traer candidatos que contengan al menos la primera palabra
-                var candidatos = context.Clientes
-                    .AsNoTracking()
-                    .Where(c => c.Nombre.Contains(primeraPalabra))
-                    .ToList();
+                    // Traer candidatos que contengan al menos la primera palabra
+                    var candidatos = context.Clientes
+                        .AsNoTracking()
+                        .Where(c => c.Nombre.Contains(primeraPalabra))
+                        .ToList();
 
-                // Filtrar en memoria: el nombre DEBE contener TODAS las palabras buscadas
-                var resultadosFlexibles = candidatos
-                    .Where(c =>
-                    {
-                        string nombreUpper = c.Nombre.ToUpperInvariant();
-                        return palabras.All(p => nombreUpper.Contains(p.ToUpperInvariant()));
-                    })
-                    .OrderBy(c => c.Nombre)
-                    .ToList();
+                    // Filtrar en memoria: el nombre DEBE contener TODAS las palabras buscadas
+                    var resultadosFlexibles = candidatos
+                        .Where(c =>
+                        {
+                            string nombreUpper = c.Nombre.ToUpperInvariant();
+                            return palabras.All(p => nombreUpper.Contains(p.ToUpperInvariant()));
+                        })
+                        .OrderBy(c => c.Nombre)
+                        .ToList();
 
-                // Si no hay coincidencia total, devolver lista vacía (se ofrecerá crear cliente)
-                return resultadosFlexibles;
-            }
+                    // Si no hay coincidencia total, devolver lista vacía (se ofrecerá crear cliente)
+                    return resultadosFlexibles;
+                }
+            });
         }
 
         // Obtener todos los clientes
         public List<Cliente> ObtenerTodos()
         {
-            using (var context = new DOALDbContext())
+            return ConnectionHelper.EjecutarConReintento(() =>
             {
-                return context.Clientes
-                    .AsNoTracking()
-                    .OrderBy(c => c.Nombre)
-                    .ToList();
-            }
+                using (var context = new DOALDbContext())
+                {
+                    return context.Clientes
+                        .AsNoTracking()
+                        .OrderBy(c => c.Nombre)
+                        .ToList();
+                }
+            });
         }
 
         // Obtener por ID
         public Cliente ObtenerPorId(int id)
         {
-            using (var context = new DOALDbContext())
+            return ConnectionHelper.EjecutarConReintento(() =>
             {
-                return context.Clientes.Find(id);
-            }
+                using (var context = new DOALDbContext())
+                {
+                    return context.Clientes.Find(id);
+                }
+            });
         }
 
         // Agregar cliente
@@ -112,19 +127,22 @@ namespace PaintControl.Data
         {
             try
             {
-                using (var context = new DOALDbContext())
+                return ConnectionHelper.EjecutarConReintento(() =>
                 {
-                    // Generar código automáticamente
-                    var ultimoId = context.Clientes.Any()
-                        ? context.Clientes.Max(c => c.Id)
-                        : 0;
-                    cliente.Codigo = $"CLI{(ultimoId + 1):000}";
-                    cliente.FechaRegistro = DateTime.Now;
+                    using (var context = new DOALDbContext())
+                    {
+                        // Generar código automáticamente
+                        var ultimoId = context.Clientes.Any()
+                            ? context.Clientes.Max(c => c.Id)
+                            : 0;
+                        cliente.Codigo = $"CLI{(ultimoId + 1):000}";
+                        cliente.FechaRegistro = DateTime.Now;
 
-                    context.Clientes.Add(cliente);
-                    context.SaveChanges();
-                    return true;
-                }
+                        context.Clientes.Add(cliente);
+                        context.SaveChanges();
+                        return true;
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -140,18 +158,21 @@ namespace PaintControl.Data
         {
             try
             {
-                using (var context = new DOALDbContext())
+                return ConnectionHelper.EjecutarConReintento(() =>
                 {
-                    var clienteExistente = context.Clientes.Find(cliente.Id);
-                    if (clienteExistente == null)
-                        return false;
+                    using (var context = new DOALDbContext())
+                    {
+                        var clienteExistente = context.Clientes.Find(cliente.Id);
+                        if (clienteExistente == null)
+                            return false;
 
-                    clienteExistente.Codigo = cliente.Codigo;
-                    clienteExistente.Nombre = cliente.Nombre;
+                        clienteExistente.Codigo = cliente.Codigo;
+                        clienteExistente.Nombre = cliente.Nombre;
 
-                    context.SaveChanges();
-                    return true;
-                }
+                        context.SaveChanges();
+                        return true;
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -165,10 +186,13 @@ namespace PaintControl.Data
         {
             try
             {
-                using (var context = new DOALDbContext())
+                return ConnectionHelper.EjecutarConReintento(() =>
                 {
-                    return context.Movimientos.Count(m => m.ClienteId == clienteId);
-                }
+                    using (var context = new DOALDbContext())
+                    {
+                        return context.Movimientos.Count(m => m.ClienteId == clienteId);
+                    }
+                });
             }
             catch
             {
@@ -181,16 +205,19 @@ namespace PaintControl.Data
         {
             try
             {
-                using (var context = new DOALDbContext())
+                return ConnectionHelper.EjecutarConReintento(() =>
                 {
-                    var cliente = context.Clientes.Find(id);
-                    if (cliente == null)
-                        return false;
+                    using (var context = new DOALDbContext())
+                    {
+                        var cliente = context.Clientes.Find(id);
+                        if (cliente == null)
+                            return false;
 
-                    context.Clientes.Remove(cliente);
-                    context.SaveChanges();
-                    return true;
-                }
+                        context.Clientes.Remove(cliente);
+                        context.SaveChanges();
+                        return true;
+                    }
+                });
             }
             catch (Exception ex)
             {

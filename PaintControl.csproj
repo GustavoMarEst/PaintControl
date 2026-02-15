@@ -71,6 +71,7 @@
   <ItemGroup>
     <Compile Include="Data\CatalogoService.cs" />
     <Compile Include="Data\ClienteService.cs" />
+    <Compile Include="Data\Connectionhelper.cs" />
     <Compile Include="Data\DOALDbContext.cs" />
     <Compile Include="Data\MovimientoService.cs" />
     <Compile Include="Forms\FormAltaCliente.cs">

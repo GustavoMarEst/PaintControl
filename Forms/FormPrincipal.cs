@@ -220,7 +220,19 @@ namespace PaintControl
                 return;
             }
 
-            List<Cliente> resultados = clienteService.BuscarPorCodigoONombre(criterio);
+            List<Cliente> resultados;
+            try
+            {
+                resultados = clienteService.BuscarPorCodigoONombre(criterio);
+            }
+            catch (ConexionException)
+            {
+                MessageBox.Show(
+                    "No se pudo conectar con el servidor para realizar la búsqueda.\n" +
+                    "Verifique la conexión e intente nuevamente.",
+                    "Error de Conexión", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
             if (resultados.Count == 0)
             {
@@ -678,22 +690,31 @@ namespace PaintControl
 
             List<Movimiento> movimientos;
 
-            if (chkFiltrarFecha != null && chkFiltrarFecha.Checked)
+            try
             {
-                DateTime fechaInicio = dtpFechaInicio.Value.Date; // Inicio del día (00:00:00)
-                DateTime fechaFin = dtpFechaFin.Value.Date.AddDays(1).AddSeconds(-1); // Fin del día (23:59:59)
+                if (chkFiltrarFecha != null && chkFiltrarFecha.Checked)
+                {
+                    DateTime fechaInicio = dtpFechaInicio.Value.Date;
+                    DateTime fechaFin = dtpFechaFin.Value.Date.AddDays(1).AddSeconds(-1);
 
-                movimientos = movimientoService.ObtenerPorClienteYFechas(
-                    clienteActual.Id,
-                    fechaInicio,
-                    fechaFin
-                );
+                    movimientos = movimientoService.ObtenerPorClienteYFechas(
+                        clienteActual.Id, fechaInicio, fechaFin);
 
-                lblClienteInfo.Text += $" (Filtrado: {fechaInicio.ToShortDateString()} - {dtpFechaFin.Value.ToShortDateString()})";
+                    lblClienteInfo.Text += $" (Filtrado: {fechaInicio.ToShortDateString()} - {dtpFechaFin.Value.ToShortDateString()})";
+                }
+                else
+                {
+                    movimientos = movimientoService.ObtenerPorCliente(clienteActual.Id);
+                }
             }
-            else
+            catch (ConexionException)
             {
-                movimientos = movimientoService.ObtenerPorCliente(clienteActual.Id);
+                dgvMovimientos.ResumeLayout();
+                MessageBox.Show(
+                    "No se pudieron cargar los movimientos.\n" +
+                    "Verifique la conexión con el servidor e intente nuevamente.",
+                    "Error de Conexión", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
             }
 
             foreach (var mov in movimientos)
@@ -1076,7 +1097,19 @@ namespace PaintControl
             topPanel.Controls.Add(lblTitulo);
 
             // Cargar todos los clientes UNA SOLA VEZ
-            var todosLosClientes = clienteService.ObtenerTodos();
+            List<Cliente> todosLosClientes;
+            try
+            {
+                todosLosClientes = clienteService.ObtenerTodos();
+            }
+            catch (ConexionException)
+            {
+                MessageBox.Show(
+                    "No se pudo cargar la lista de clientes.\n" +
+                    "Verifique la conexión con el servidor e intente nuevamente.",
+                    "Error de Conexión", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
             DataGridView dgv = new DataGridView
             {
@@ -1395,7 +1428,19 @@ namespace PaintControl
 
             int numeroMovimiento = Convert.ToInt32(dgvMovimientos.Rows[e.RowIndex].Cells["NumMov"].Value);
 
-            var movimiento = movimientoService.ObtenerPorNumero(numeroMovimiento);
+            Movimiento movimiento;
+            try
+            {
+                movimiento = movimientoService.ObtenerPorNumero(numeroMovimiento);
+            }
+            catch (ConexionException)
+            {
+                MessageBox.Show(
+                    "No se pudo cargar el detalle del movimiento.\n" +
+                    "Verifique la conexión con el servidor e intente nuevamente.",
+                    "Error de Conexión", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
             if (movimiento != null)
             {

@@ -377,16 +377,27 @@ namespace PaintControl.Forms
 
             List<Movimiento> movimientos;
 
-            if (chkFiltrarFecha.Checked)
+            try
             {
-                DateTime fechaInicio = dtpFechaInicio.Value.Date;
-                DateTime fechaFin = dtpFechaFin.Value.Date.AddDays(1).AddSeconds(-1);
-                movimientos = movimientoService.ObtenerTodosPorFechas(fechaInicio, fechaFin);
-            }
-            else
+                if (chkFiltrarFecha.Checked)
+                {
+                    DateTime fechaInicio = dtpFechaInicio.Value.Date;
+                    DateTime fechaFin = dtpFechaFin.Value.Date.AddDays(1).AddSeconds(-1);
+                    movimientos = movimientoService.ObtenerTodosPorFechas(fechaInicio, fechaFin);
+                }
+                else
+                {
+                    // ObtenerTodos() ya incluye .Include(m => m.Cliente)
+                    movimientos = movimientoService.ObtenerTodos();
+                }
+            } 
+            catch (ConexionException)
             {
-                // ObtenerTodos() ya incluye .Include(m => m.Cliente)
-                movimientos = movimientoService.ObtenerTodos();
+                MessageBox.Show(
+                    "No se pudieron cargar los movimientos.\n" +
+                    "Verifique la conexión con el servidor e intente nuevamente.",
+                    "Error de Conexión", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
             }
 
             // Guardar en variable de clase para evitar consultas repetidas

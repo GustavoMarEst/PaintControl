@@ -11,6 +11,22 @@ namespace PaintControl.Data
             // No intentar crear ni migrar la base de datos
             // Las tablas ya existen (creadas manualmente o por script SQL)
             Database.SetInitializer<DOALDbContext>(null);
+
+            // Timeout para comandos SQL: si una consulta no responde en 15 segundos,
+            // se cancela en vez de esperar los 30 segundos por defecto.
+            // Esto evita que la app se "congele" esperando al servidor.
+            this.Database.CommandTimeout = 15;
+
+            // Desactivar detección automática de cambios para lecturas AsNoTracking
+            // (mejora rendimiento en consultas de solo lectura)
+            this.Configuration.AutoDetectChangesEnabled = true;
+
+            // Desactivar lazy loading - cargamos todo explícitamente con Include()
+            // Evita consultas N+1 accidentales que degradan rendimiento en red
+            this.Configuration.LazyLoadingEnabled = false;
+
+            // Desactivar proxy - no necesitamos entidades proxy para este uso
+            this.Configuration.ProxyCreationEnabled = false;
         }
 
         public DbSet<Cliente> Clientes { get; set; }

@@ -290,10 +290,24 @@ namespace PaintControl.Forms
         private void CargarTipos()
         {
             lstTipos.Items.Clear();
-            var tipos = catalogoService.ObtenerTodosTipos();
-            foreach (var t in tipos)
+
+            try
+            {
+               var tipos = catalogoService.ObtenerTodosTipos();
+
+                foreach (var t in tipos)
                 lstTipos.Items.Add(t);
-            lblTiposInfo.Text = $"{tipos.Count(t => t.Activo)} tipo(s) activo(s)";
+                lblTiposInfo.Text = $"{tipos.Count(t => t.Activo)} tipo(s) activo(s)";
+            }
+            catch (ConexionException)
+            {
+                MessageBox.Show(
+                    "No se pudo cargar el catálogo.\n" +
+                    "Verifique la conexión con el servidor e intente nuevamente.",
+                    "Error de Conexión", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
 
             tipoSeleccionado = null;
             lineaSeleccionada = null;
@@ -306,10 +320,23 @@ namespace PaintControl.Forms
         private void CargarLineas(int tipoId)
         {
             lstLineas.Items.Clear();
-            var lineas = catalogoService.ObtenerTodasLineasPorTipo(tipoId);
-            foreach (var l in lineas)
-                lstLineas.Items.Add(l);
-            lblLineasInfo.Text = $"{lineas.Count(l => l.Activo)} l\u00ednea(s) en {tipoSeleccionado?.Nombre ?? ""}";
+
+            try
+            {
+                var lineas = catalogoService.ObtenerTodasLineasPorTipo(tipoId);
+                foreach (var l in lineas)
+                    lstLineas.Items.Add(l);
+                lblLineasInfo.Text = $"{lineas.Count(l => l.Activo)} l\u00ednea(s) en {tipoSeleccionado?.Nombre ?? ""}";
+            }
+            catch (ConexionException)
+{
+                MessageBox.Show(
+                    "No se pudo cargar el catálogo.\n" +
+                    "Verifique la conexión con el servidor e intente nuevamente.",
+                    "Error de Conexión", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
 
             lineaSeleccionada = null;
             lstAcabados.Items.Clear();
@@ -319,10 +346,22 @@ namespace PaintControl.Forms
         private void CargarAcabados(int lineaId)
         {
             lstAcabados.Items.Clear();
-            var acabados = catalogoService.ObtenerTodosAcabadosPorLinea(lineaId);
-            foreach (var a in acabados)
-                lstAcabados.Items.Add(a);
-            lblAcabadosInfo.Text = $"{acabados.Count(a => a.Activo)} acabado(s) en {lineaSeleccionada?.Nombre ?? ""}";
+
+            try
+            {
+                var acabados = catalogoService.ObtenerTodosAcabadosPorLinea(lineaId);
+                foreach (var a in acabados)
+                    lstAcabados.Items.Add(a);
+                lblAcabadosInfo.Text = $"{acabados.Count(a => a.Activo)} acabado(s) en {lineaSeleccionada?.Nombre ?? ""}";
+            }
+            catch (ConexionException)
+            {
+                MessageBox.Show(
+                    "No se pudo cargar el catálogo.\n" +
+                    "Verifique la conexión con el servidor e intente nuevamente.",
+                    "Error de Conexión", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
         }
 
         // ========== EVENTOS DE SELECCIÓN ==========
