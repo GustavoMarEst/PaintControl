@@ -587,8 +587,8 @@ namespace PaintControl.Forms
                 headerFlow.Controls.Add(new Label { Text = "Tinta", Font = headerFont, ForeColor = headerColor, AutoSize = false, Size = new Size(50, 16), TextAlign = ContentAlignment.MiddleCenter, Margin = new Padding(0) });
                 headerFlow.Controls.Add(new Label { Text = "", Font = headerFont, ForeColor = headerColor, AutoSize = false, Size = new Size(18, 16), Margin = new Padding(0) }); // espacio del "="
                 headerFlow.Controls.Add(new Label { Text = "Onzas", Font = headerFont, ForeColor = headerColor, AutoSize = false, Size = new Size(42, 16), TextAlign = ContentAlignment.MiddleCenter, Margin = new Padding(0, 0, 2, 0) });
-                headerFlow.Controls.Add(new Label { Text = "16vos", Font = headerFont, ForeColor = headerColor, AutoSize = false, Size = new Size(42, 16), TextAlign = ContentAlignment.MiddleCenter, Margin = new Padding(0, 0, 2, 0) });
-                headerFlow.Controls.Add(new Label { Text = "128vos", Font = headerFont, ForeColor = headerColor, AutoSize = false, Size = new Size(42, 16), TextAlign = ContentAlignment.MiddleCenter, Margin = new Padding(0) });
+                headerFlow.Controls.Add(new Label { Text = "64s", Font = headerFont, ForeColor = headerColor, AutoSize = false, Size = new Size(42, 16), TextAlign = ContentAlignment.MiddleCenter, Margin = new Padding(0, 0, 2, 0) });
+                headerFlow.Controls.Add(new Label { Text = "128s", Font = headerFont, ForeColor = headerColor, AutoSize = false, Size = new Size(42, 16), TextAlign = ContentAlignment.MiddleCenter, Margin = new Padding(0) });
                 Panel headerPanel2 = new Panel { Dock = DockStyle.Fill, Margin = new Padding(2, 0, 2, 0), BackColor = FondoFormula };
                 headerPanel2.Controls.Add(headerFlow);
                 headerPanel2.Resize += (s, e) => { headerFlow.Location = new Point(Math.Max(0, (headerPanel2.Width - headerFlow.Width) / 2), 0); };
@@ -641,12 +641,11 @@ namespace PaintControl.Forms
             for (int i = 0; i < 6; i++)
             {
                 if (txtTipos[i] == null || string.IsNullOrWhiteSpace(txtTipos[i].Text)) continue;
-                string f = $"{txtTipos[i].Text.Trim()} = {txtValores1[i].Text.Trim()}";
-                if (txtValores2[i] != null && !string.IsNullOrWhiteSpace(txtValores2[i].Text))
-                    f += $" {txtValores2[i].Text.Trim()}";
-                if (txtValores3[i] != null && !string.IsNullOrWhiteSpace(txtValores3[i].Text))
-                    f += $" {txtValores3[i].Text.Trim()}";
-                formulas.Add(f);
+                // Siempre guardar las 3 posiciones, usando "-" para campos vacíos
+                string v1 = string.IsNullOrWhiteSpace(txtValores1[i]?.Text) ? "-" : txtValores1[i].Text.Trim();
+                string v2 = string.IsNullOrWhiteSpace(txtValores2[i]?.Text) ? "-" : txtValores2[i].Text.Trim();
+                string v3 = string.IsNullOrWhiteSpace(txtValores3[i]?.Text) ? "-" : txtValores3[i].Text.Trim();
+                formulas.Add($"{txtTipos[i].Text.Trim()} = {v1} {v2} {v3}");
             }
             return string.Join("|", formulas);
         }
